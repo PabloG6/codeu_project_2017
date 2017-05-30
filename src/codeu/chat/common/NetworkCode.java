@@ -35,5 +35,8 @@ public final class NetworkCode {
       RELAY_READ_REQUEST = 27,
       RELAY_READ_RESPONSE = 28,
       RELAY_WRITE_REQUEST = 29,
-      RELAY_WRITE_RESPONSE = 30;
+      RELAY_WRITE_RESPONSE = 30,
+      // added constants for server
+      SERVER_INFO_REQUEST = 31,
+      SERVER_INFO_RESPONSE = 32;
 }
