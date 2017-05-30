@@ -22,59 +22,48 @@ import java.util.Date;
 
 public final class Time implements Comparable<Time> {
 
-	public static final Serializer<Time> SERIALIZER = new Serializer<Time>() {
+  public static final Serializer<Time> SERIALIZER = new Serializer<Time>() {
 
-		@Override
-		public void write(OutputStream out, Time value) throws IOException {
+    @Override
+    public void write(OutputStream out, Time value) throws IOException {
 
-			Serializers.LONG.write(out, value.inMs());
+      Serializers.LONG.write(out, value.inMs());
 
-		}
+    }
 
-		@Override
-		public Time read(InputStream in) throws IOException {
+    @Override
+    public Time read(InputStream in) throws IOException {
 
-			return Time.fromMs(Serializers.LONG.read(in));
+      return Time.fromMs(Serializers.LONG.read(in));
 
-		}
-	};
+    }
+  };
 
-	private static final SimpleDateFormat formatter = new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss.SSS");
+  private static final SimpleDateFormat formatter =
+      new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss.SSS");
 
-	private final Date date;
+  private final Date date;
 
-	private Time(long totalMs) {
-		this.date = new Date(totalMs);
-	}
+  private Time(long totalMs) { this.date = new Date(totalMs); }
 
-	public long inMs() {
-		return date.getTime();
-	}
+  public long inMs() { return date.getTime(); }
 
-	@Override
-	public int compareTo(Time other) {
-		return date.compareTo(other.date);
-	}
+  @Override
+  public int compareTo(Time other) {
+    return date.compareTo(other.date);
+  }
 
-	public boolean inRange(Time start, Time end) {
-		return this.compareTo(start) >= 0 && this.compareTo(end) <= 0;
-	}
+  public boolean inRange(Time start, Time end) {
+    return this.compareTo(start) >= 0 && this.compareTo(end) <= 0;
+  }
 
-	@Override
-	public String toString() {
-		return formatter.format(date);
-	}
+  @Override
+  public String toString() {
+    return formatter.format(date);
+  }
 
-	public static Time fromMs(long ms) {
-		return new Time(ms);
-	}
+  public static Time fromMs(long ms) { return new Time(ms); }
 
-	public static Time now() {
-		return Time.fromMs(System.currentTimeMillis());
-	}
-	
-	public Date getDate() {
-		return date;
-	}
+  public static Time now() { return Time.fromMs(System.currentTimeMillis()); }
 
 }

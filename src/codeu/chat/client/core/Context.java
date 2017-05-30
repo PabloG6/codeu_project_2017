@@ -23,9 +23,6 @@ import codeu.chat.common.User;
 import codeu.chat.util.Uuid;
 import codeu.chat.util.connections.ConnectionSource;
 
-//import ServerInfo class
-import codeu.chat.common.ServerInfo;
-
 public final class Context {
 
   private final BasicView view;
@@ -50,10 +47,4 @@ public final class Context {
     }
     return users;
   }
-  
-  // added context for getInfo()
-  public ServerInfo getInfo() {
-	  return ((View) view).getInfo();
-  }
-  
 }
