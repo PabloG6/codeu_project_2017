@@ -31,6 +31,7 @@ import codeu.chat.common.Message;
 import codeu.chat.common.NetworkCode;
 import codeu.chat.common.Relay;
 import codeu.chat.common.Secret;
+import codeu.chat.common.ServerInfo;
 import codeu.chat.common.User;
 import codeu.chat.util.Logger;
 import codeu.chat.util.Serializers;
@@ -39,12 +40,8 @@ import codeu.chat.util.Timeline;
 import codeu.chat.util.Uuid;
 import codeu.chat.util.connections.Connection;
 
-//import ServerInfo class
-import codeu.chat.common.ServerInfo;
-
 public final class Server {
 
-	// added ServerInfo obj
 	private static final ServerInfo info = new ServerInfo();
 
 	private interface Command {
@@ -178,6 +175,14 @@ public final class Server {
 			}
 		});
 
+		this.commands.put(NetworkCode.SERVER_INFO_REQUEST, new Command() {
+			@Override
+			public void onMessage(InputStream in, OutputStream out) throws IOException {
+				Serializers.INTEGER.write(out, NetworkCode.SERVER_INFO_RESPONSE);
+				Time.SERIALIZER.write(out, info.startTime);
+			}
+		});
+
 		this.timeline.scheduleNow(new Runnable() {
 			@Override
 			public void run() {
@@ -212,11 +217,7 @@ public final class Server {
 					final int type = Serializers.INTEGER.read(connection.in());
 					final Command command = commands.get(type);
 
-					// added if statement that passes ServerInfo info to client
-					if (type == NetworkCode.SERVER_INFO_REQUEST) {
-						Serializers.INTEGER.write(connection.out(), NetworkCode.SERVER_INFO_RESPONSE);
-						Uuid.SERIALIZER.write(connection.out(), info.version);
-					} else if (command == null) {
+					if (command == null) {
 						// The message type cannot be handled so return a dummy
 						// message.
 						Serializers.INTEGER.write(connection.out(), NetworkCode.NO_MESSAGE);
@@ -287,5 +288,4 @@ public final class Server {
 			}
 		};
 	}
-
 }

@@ -22,6 +22,7 @@ import codeu.chat.common.ConversationHeader;
 import codeu.chat.common.ConversationPayload;
 import codeu.chat.common.Message;
 import codeu.chat.common.NetworkCode;
+import codeu.chat.common.ServerInfo;
 import codeu.chat.common.User;
 import codeu.chat.util.Logger;
 import codeu.chat.util.Serializers;
@@ -29,9 +30,6 @@ import codeu.chat.util.Time;
 import codeu.chat.util.Uuid;
 import codeu.chat.util.connections.Connection;
 import codeu.chat.util.connections.ConnectionSource;
-
-//import ServerInfo class
-import codeu.chat.common.ServerInfo;
 
 // VIEW
 //
@@ -140,24 +138,28 @@ final class View implements BasicView {
 		return messages;
 	}
 
-	// added function that gets info obj from server
 	public ServerInfo getInfo() {
 		try (final Connection connection = source.connect()) {
 			Serializers.INTEGER.write(connection.out(), NetworkCode.SERVER_INFO_REQUEST);
-			if (Serializers.INTEGER.read(connection.in()) == NetworkCode.SERVER_INFO_RESPONSE)
-			{
+			if (Serializers.INTEGER.read(connection.in()) == NetworkCode.SERVER_INFO_RESPONSE) {
 				final Time startTime = Time.SERIALIZER.read(connection.in());
 				return new ServerInfo(startTime);
 			} else {
-				// Communicate this error - the server did not respond with the type of
+				// Communicate this error - the server did not respond with the
+				// type of
 				// response we expected.
-				LOG.error("Server did not repond with expected type.");
+				System.out.println("ERROR: Server did not respond with the type of response expected.");
+				LOG.error("ERROR: Server did not respond with the type of response expected.");
 			}
 		} catch (Exception ex) {
-				// Communicate this error - something went wrong with the connection.
-				LOG.error("Something went wrong with the connection.");
-			}
-			// If we get here it means something went wrong and null should be returned
-			return null;
+			// Communicate this error - something went wrong with the
+			// connection.
+			System.out.println("ERROR: Something went wrong with the connection.");
+			LOG.error("ERROR: Something went wrong with the connection.");
 		}
+		// If we get here it means something went wrong and null should be
+		// returned
+		return null;
 	}
+
+}
