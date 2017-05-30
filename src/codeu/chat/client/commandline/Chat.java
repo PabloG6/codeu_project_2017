@@ -14,15 +14,24 @@
 
 package codeu.chat.client.commandline;
 
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Stack;
+import java.util.TimeZone;
 
 import codeu.chat.client.core.Context;
 import codeu.chat.client.core.ConversationContext;
 import codeu.chat.client.core.MessageContext;
 import codeu.chat.client.core.UserContext;
+
+//import ServerInfo class
 import codeu.chat.common.ServerInfo;
 
 public final class Chat {
@@ -97,7 +106,9 @@ public final class Chat {
 
 		final Panel panel = new Panel();
 
+		// added call
 		panel.register("info", new Panel.Command() {
+
 			@Override
 			public void invoke(Scanner args) {
 				final ServerInfo info = context.getInfo();
@@ -105,12 +116,16 @@ public final class Chat {
 					// Communicate error to user - the server did not send us a
 					// valid
 					// info object.
-					System.out.println("ERROR: Server did not send a valid info object.");
+					System.out.println("Server did not send valid info object.");
 				} else {
 					// Print the server info to the user in a pretty way
-					System.out.println("This server has been running since " + info.startTime + " for "
-							+ info.runLength() + " seconds.");
+
+					System.out.println("The server has been running since " + info.startTime.toString().substring(3, 6)
+							+ " " + info.startTime.toString().substring(0, 2) + ", "
+							+ info.startTime.toString().substring(7, 14) + " at "
+							+ info.startTime.toString().substring(15) + ".");
 				}
+
 			}
 		});
 
