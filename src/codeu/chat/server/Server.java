@@ -159,128 +159,138 @@ public final class Server {
       }
     });
 
-    // Get Messages By Id - A client wants to get a subset of the messages from the back end.
-    this.commands.put(NetworkCode.GET_MESSAGES_BY_ID_REQUEST, new Command() {
-      @Override
-      public void onMessage(InputStream in, OutputStream out) throws IOException {
+				Serializers.INTEGER.write(out, NetworkCode.GET_CONVERSATIONS_BY_ID_RESPONSE);
+				Serializers.collection(ConversationPayload.SERIALIZER).write(out, conversations);
+			}
+		});
 
-        final Collection<Uuid> ids = Serializers.collection(Uuid.SERIALIZER).read(in);
-        final Collection<Message> messages = view.getMessages(ids);
+		// Get Messages By Id - A client wants to get a subset of the messages
+		// from the back end.
+		this.commands.put(NetworkCode.GET_MESSAGES_BY_ID_REQUEST, new Command() {
+			@Override
+			public void onMessage(InputStream in, OutputStream out) throws IOException {
 
-        Serializers.INTEGER.write(out, NetworkCode.GET_MESSAGES_BY_ID_RESPONSE);
-        Serializers.collection(Message.SERIALIZER).write(out, messages);
-      }
-    });
+				final Collection<Uuid> ids = Serializers.collection(Uuid.SERIALIZER).read(in);
+				final Collection<Message> messages = view.getMessages(ids);
 
-    this.timeline.scheduleNow(new Runnable() {
-      @Override
-      public void run() {
-        try {
+				Serializers.INTEGER.write(out, NetworkCode.GET_MESSAGES_BY_ID_RESPONSE);
+				Serializers.collection(Message.SERIALIZER).write(out, messages);
+			}
+		});
 
-          LOG.info("Reading update from relay...");
+		// get startTime
+		this.commands.put(NetworkCode.SERVER_INFO_REQUEST, new Command() {
+			@Override
+			public void onMessage(InputStream in, OutputStream out) throws IOException {
+				Serializers.INTEGER.write(out, NetworkCode.SERVER_INFO_RESPONSE);
+				Time.SERIALIZER.write(out, info.startTime);
+			}
+		});
 
-          for (final Relay.Bundle bundle : relay.read(id, secret, lastSeen, 32)) {
-            onBundle(bundle);
-            lastSeen = bundle.id();
-          }
+		this.timeline.scheduleNow(new Runnable() {
+			@Override
+			public void run() {
+				try {
 
-        } catch (Exception ex) {
+					LOG.info("Reading update from relay...");
 
-          LOG.error(ex, "Failed to read update from relay.");
+					for (final Relay.Bundle bundle : relay.read(id, secret, lastSeen, 32)) {
+						onBundle(bundle);
+						lastSeen = bundle.id();
+					}
 
-        }
+				} catch (Exception ex) {
 
-        timeline.scheduleIn(RELAY_REFRESH_MS, this);
-      }
-    });
-  }
+					LOG.error(ex, "Failed to read update from relay.");
 
-  public void handleConnection(final Connection connection) {
-    timeline.scheduleNow(new Runnable() {
-      @Override
-      public void run() {
-        try {
+				}
 
-          LOG.info("Handling connection...");
+				timeline.scheduleIn(RELAY_REFRESH_MS, this);
+			}
+		});
+	}
 
-          final int type = Serializers.INTEGER.read(connection.in());
-          final Command command = commands.get(type);
+	public void handleConnection(final Connection connection) {
+		timeline.scheduleNow(new Runnable() {
+			@Override
+			public void run() {
+				try {
 
-          if (command == null) {
-            // The message type cannot be handled so return a dummy message.
-            Serializers.INTEGER.write(connection.out(), NetworkCode.NO_MESSAGE);
-            LOG.info("Connection rejected");
-          } else {
-            command.onMessage(connection.in(), connection.out());
-            LOG.info("Connection accepted");
-          }
+					LOG.info("Handling connection...");
 
-        } catch (Exception ex) {
+					final int type = Serializers.INTEGER.read(connection.in());
+					final Command command = commands.get(type);
 
-          LOG.error(ex, "Exception while handling connection.");
+					if (command == null) {
+						// The message type cannot be handled so return a dummy
+						// message.
+						Serializers.INTEGER.write(connection.out(), NetworkCode.NO_MESSAGE);
+						LOG.info("Connection rejected");
+					} else {
+						command.onMessage(connection.in(), connection.out());
+						LOG.info("Connection accepted");
+					}
 
-        }
+				} catch (Exception ex) {
 
-        try {
-          connection.close();
-        } catch (Exception ex) {
-          LOG.error(ex, "Exception while closing connection.");
-        }
-      }
-    });
-  }
+					LOG.error(ex, "Exception while handling connection.");
 
-  private void onBundle(Relay.Bundle bundle) {
+				}
 
-    final Relay.Bundle.Component relayUser = bundle.user();
-    final Relay.Bundle.Component relayConversation = bundle.conversation();
-    final Relay.Bundle.Component relayMessage = bundle.user();
+				try {
+					connection.close();
+				} catch (Exception ex) {
+					LOG.error(ex, "Exception while closing connection.");
+				}
+			}
+		});
+	}
 
-    User user = model.userById().first(relayUser.id());
+	private void onBundle(Relay.Bundle bundle) {
 
-    if (user == null) {
-      user = controller.newUser(relayUser.id(), relayUser.text(), relayUser.time());
-    }
+		final Relay.Bundle.Component relayUser = bundle.user();
+		final Relay.Bundle.Component relayConversation = bundle.conversation();
+		final Relay.Bundle.Component relayMessage = bundle.user();
 
-    ConversationHeader conversation = model.conversationById().first(relayConversation.id());
+		User user = model.userById().first(relayUser.id());
 
-    if (conversation == null) {
+		if (user == null) {
+			user = controller.newUser(relayUser.id(), relayUser.text(), relayUser.time());
+		}
 
-      // As the relay does not tell us who made the conversation - the first person who
-      // has a message in the conversation will get ownership over this server's copy
-      // of the conversation.
-      conversation = controller.newConversation(relayConversation.id(),
-                                                relayConversation.text(),
-                                                user.id,
-                                                relayConversation.time());
-    }
+		ConversationHeader conversation = model.conversationById().first(relayConversation.id());
 
-    Message message = model.messageById().first(relayMessage.id());
+		if (conversation == null) {
 
-    if (message == null) {
-      message = controller.newMessage(relayMessage.id(),
-                                      user.id,
-                                      conversation.id,
-                                      relayMessage.text(),
-                                      relayMessage.time());
-    }
-  }
+			// As the relay does not tell us who made the conversation - the
+			// first person who
+			// has a message in the conversation will get ownership over this
+			// server's copy
+			// of the conversation.
+			conversation = controller.newConversation(relayConversation.id(), relayConversation.text(), user.id,
+					relayConversation.time());
+		}
 
-  private Runnable createSendToRelayEvent(final Uuid userId,
-                                          final Uuid conversationId,
-                                          final Uuid messageId) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        final User user = view.findUser(userId);
-        final ConversationHeader conversation = view.findConversation(conversationId);
-        final Message message = view.findMessage(messageId);
-        relay.write(id,
-                    secret,
-                    relay.pack(user.id, user.name, user.creation),
-                    relay.pack(conversation.id, conversation.title, conversation.creation),
-                    relay.pack(message.id, message.content, message.creation));
-      }
-    };
-  }
+		Message message = model.messageById().first(relayMessage.id());
+
+		if (message == null) {
+			message = controller.newMessage(relayMessage.id(), user.id, conversation.id, relayMessage.text(),
+					relayMessage.time());
+		}
+	}
+
+	private Runnable createSendToRelayEvent(final Uuid userId, final Uuid conversationId, final Uuid messageId) {
+		return new Runnable() {
+			@Override
+			public void run() {
+				final User user = view.findUser(userId);
+				final ConversationHeader conversation = view.findConversation(conversationId);
+				final Message message = view.findMessage(messageId);
+				relay.write(id, secret, relay.pack(user.id, user.name, user.creation),
+						relay.pack(conversation.id, conversation.title, conversation.creation),
+						relay.pack(message.id, message.content, message.creation));
+			}
+		};
+	}
+
 }

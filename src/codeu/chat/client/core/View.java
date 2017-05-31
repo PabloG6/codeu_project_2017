@@ -124,16 +124,34 @@ final class View implements BasicView {
       Serializers.INTEGER.write(connection.out(), NetworkCode.GET_MESSAGES_BY_ID_REQUEST);
       Serializers.collection(Uuid.SERIALIZER).write(connection.out(), ids);
 
-      if (Serializers.INTEGER.read(connection.in()) == NetworkCode.GET_MESSAGES_BY_ID_RESPONSE) {
-        messages.addAll(Serializers.collection(Message.SERIALIZER).read(connection.in()));
-      } else {
-        LOG.error("Response from server failed.");
-      }
-    } catch (Exception ex) {
-      System.out.println("ERROR: Exception during call on server. Check log for details.");
-      LOG.error(ex, "Exception during call on server.");
-    }
+		return messages;
+	}
 
+	// get info obj from server
+	public ServerInfo getInfo() {
+		try (final Connection connection = source.connect()) {
+			Serializers.INTEGER.write(connection.out(), NetworkCode.SERVER_INFO_REQUEST);
+			if (Serializers.INTEGER.read(connection.in()) == NetworkCode.SERVER_INFO_RESPONSE) {
+				final Time startTime = Time.SERIALIZER.read(connection.in());
+				return new ServerInfo(startTime);
+			} else {
+				// Communicate this error - the server did not respond with the
+				// type of
+				// response we expected.
+				System.out.println("ERROR: Server did not respond with the type of response expected.");
+				LOG.error("ERROR: Server did not respond with the type of response expected.");
+			}
+		} catch (Exception ex) {
+			// Communicate this error - something went wrong with the
+			// connection.
+			System.out.println("ERROR: Something went wrong with the connection.");
+			LOG.error("ERROR: Something went wrong with the connection.");
+		}
+		// If we get here it means something went wrong and null should be
+		// returned
+		return null;
+	}
+    
     return messages;
   }
 }
