@@ -47,6 +47,7 @@ public final class Context {
 		return users;
 	}
 
+	// add server info to context
 	public ServerInfo getInfo() {
 		return ((View) view).getInfo();
 	}

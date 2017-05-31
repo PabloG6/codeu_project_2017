@@ -138,6 +138,7 @@ final class View implements BasicView {
 		return messages;
 	}
 
+	// get info obj from server
 	public ServerInfo getInfo() {
 		try (final Connection connection = source.connect()) {
 			Serializers.INTEGER.write(connection.out(), NetworkCode.SERVER_INFO_REQUEST);

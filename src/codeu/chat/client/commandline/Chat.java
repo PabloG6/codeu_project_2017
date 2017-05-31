@@ -97,6 +97,7 @@ public final class Chat {
 
 		final Panel panel = new Panel();
 
+		// add command to print server info
 		panel.register("info", new Panel.Command() {
 			@Override
 			public void invoke(Scanner args) {

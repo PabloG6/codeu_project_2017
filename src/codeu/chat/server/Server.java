@@ -175,6 +175,7 @@ public final class Server {
 			}
 		});
 
+		// get startTime
 		this.commands.put(NetworkCode.SERVER_INFO_REQUEST, new Command() {
 			@Override
 			public void onMessage(InputStream in, OutputStream out) throws IOException {
