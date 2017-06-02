@@ -57,6 +57,23 @@ private StringBuilder token;
  
  //main class
  public final class Tokenizer {
-   public Tokenizer(String source) { ... }
-   public String next() throws IOException { ... }
+   public Tokenizer(String source) { 
+     Tokenizer str = new StringTokenizer("this is a test");
+     while (str.remaining() > 0) {
+         System.out.println(str.nextToken());
+     }
+   }
+   public String next() throws IOException { 
+     while (remaining() > 0 && Character.isWhitespace(peek()) {
+     read();  // ignore the result because we already know that it is a whitespace character
+     }
+     if (remaining() <= 0) {
+        return null;
+     } else if (peek() == ‘”’) {
+        readWithQuotes();
+     } else {
+        readWithNoQuotes();
+  }
+
+ }
  }
