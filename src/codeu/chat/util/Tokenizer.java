@@ -1,6 +1,6 @@
 private StringBuilder token;
- private String source;
- private int at;
+private String source;
+private int at;
  
  //helper functions
  private int remaining() {
@@ -75,5 +75,4 @@ private StringBuilder token;
         readWithNoQuotes();
   }
 
- }
  }
