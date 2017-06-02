@@ -25,14 +25,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import codeu.chat.common.ConversationHeader;
-import codeu.chat.common.ConversationPayload;
-import codeu.chat.common.LinearUuidGenerator;
-import codeu.chat.common.Message;
-import codeu.chat.common.NetworkCode;
-import codeu.chat.common.Relay;
-import codeu.chat.common.Secret;
-import codeu.chat.common.User;
+import codeu.chat.common.*;
 import codeu.chat.util.Logger;
 import codeu.chat.util.Serializers;
 import codeu.chat.util.Time;
@@ -41,7 +34,7 @@ import codeu.chat.util.Uuid;
 import codeu.chat.util.connections.Connection;
 
 public final class Server {
-
+  private static final ServerInfo serverInfo = new ServerInfo();
   private interface Command {
     void onMessage(InputStream in, OutputStream out) throws IOException;
   }
@@ -140,6 +133,15 @@ public final class Server {
 
         Serializers.INTEGER.write(out, NetworkCode.GET_ALL_CONVERSATIONS_RESPONSE);
         Serializers.collection(ConversationHeader.SERIALIZER).write(out, conversations);
+      }
+    });
+
+    this.commands.put(NetworkCode.SERVER_INFO_REQUEST, new Command() {
+
+      @Override
+      public void onMessage(InputStream in, OutputStream out) throws IOException {
+        Serializers.INTEGER.write(out, NetworkCode.SERVER_INFO_RESPONSE);
+        Uuid.SERIALIZER.write(out, serverInfo.version);
       }
     });
 

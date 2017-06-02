@@ -14,21 +14,18 @@
 
 package codeu.chat.client.core;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import codeu.chat.common.BasicView;
-import codeu.chat.common.ConversationHeader;
-import codeu.chat.common.ConversationPayload;
-import codeu.chat.common.Message;
-import codeu.chat.common.NetworkCode;
-import codeu.chat.common.User;
+import codeu.chat.common.*;
 import codeu.chat.util.Logger;
 import codeu.chat.util.Serializers;
 import codeu.chat.util.Time;
 import codeu.chat.util.Uuid;
 import codeu.chat.util.connections.Connection;
 import codeu.chat.util.connections.ConnectionSource;
+import sun.nio.ch.Net;
 
 // VIEW
 //
@@ -90,7 +87,23 @@ final class View implements BasicView {
 
     return summaries;
   }
+  public ServerInfo getServerInfo() {
+    try {
+      final Connection connection = this.source.connect();
+      Serializers.INTEGER.write(connection.out(), NetworkCode.SERVER_INFO_REQUEST);
+      if(Serializers.INTEGER.read(connection.in()) == NetworkCode.SERVER_INFO_RESPONSE) {
+        final Uuid version = Uuid.SERIALIZER.read(connection.in());
+        return new ServerInfo(version);
+      } else {
+        System.out.println("Oops, something wen't wrong. Please try again");
+      }
+    } catch (IOException e) {
+      System.out.println("Oops, something wen't wrong. Please try again");
+      e.printStackTrace();
+    }
 
+    return null;
+  }
   @Override
   public Collection<ConversationPayload> getConversationPayloads(Collection<Uuid> ids) {
 

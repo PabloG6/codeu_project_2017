@@ -23,6 +23,7 @@ import codeu.chat.client.core.Context;
 import codeu.chat.client.core.ConversationContext;
 import codeu.chat.client.core.MessageContext;
 import codeu.chat.client.core.UserContext;
+import codeu.chat.common.ServerInfo;
 
 public final class Chat {
 
@@ -108,11 +109,23 @@ public final class Chat {
                 System.out.println("    Add a new user with the given name.");
                 System.out.println("  u-sign-in <name>");
                 System.out.println("    Sign in as the user with the given name.");
+                System.out.println("  info");
                 System.out.println("    Shows the current version of the Chat Relay app");
-                System.out.println("  u-version-check");
                 System.out.println("  exit");
                 System.out.println("    Exit the program.");
 
+            }
+        });
+
+        panel.register("help", new Panel.Command() {
+            @Override
+            public void invoke(Scanner line) {
+                final ServerInfo info = context.getServerInfo();
+                if(info == null) {
+                    System.out.println("Server did not send a valid response. Please try again");
+                } else {
+                    System.out.format("CODE U CHAT CLIENT SERVER VERSION: %s", info.version);
+                }
             }
         });
 
@@ -152,15 +165,6 @@ public final class Chat {
             }
         });
 
-        //U-VERSION-CHECK (checks the version of the chat appliccation)
-        panel.register("u-version-check", new Panel.Command() {
-
-            @Override
-            public void invoke(Scanner line) {
-                System.out.println("Version Check:");
-                System.out.format("Current Version %s \n", VERSION_CHECK);
-            }
-        });
 
         // U-SIGN-IN (sign in user)
         //
