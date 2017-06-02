@@ -87,6 +87,8 @@ final class View implements BasicView {
 
     return summaries;
   }
+
+  @Override
   public ServerInfo getServerInfo() {
     try {
       final Connection connection = this.source.connect();
@@ -104,6 +106,8 @@ final class View implements BasicView {
 
     return null;
   }
+
+
   @Override
   public Collection<ConversationPayload> getConversationPayloads(Collection<Uuid> ids) {
 
