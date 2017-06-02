@@ -35,7 +35,6 @@ public final class Chat {
     // panel to the top of the stack. When a command wants to go to the previous
     // panel all it needs to do is pop the top panel.
     private final Stack<Panel> panels = new Stack<>();
-    public static final String VERSION_CHECK = "0.0.1";
 
     public Chat(Context context) {
         this.panels.push(createRootPanel(context));
@@ -117,14 +116,14 @@ public final class Chat {
             }
         });
 
-        panel.register("help", new Panel.Command() {
+        panel.register("info", new Panel.Command() {
             @Override
             public void invoke(Scanner line) {
                 final ServerInfo info = context.getServerInfo();
                 if(info == null) {
                     System.out.println("Server did not send a valid response. Please try again");
                 } else {
-                    System.out.format("CODE U CHAT CLIENT SERVER VERSION: %s", info.version);
+                    System.out.format("CODE U CHAT CLIENT SERVER VERSION: %s \n", info.version);
                 }
             }
         });
