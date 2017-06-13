@@ -22,6 +22,7 @@ import codeu.chat.common.ConversationHeader;
 import codeu.chat.common.ConversationPayload;
 import codeu.chat.common.Message;
 import codeu.chat.common.NetworkCode;
+import codeu.chat.common.ServerInfo;
 import codeu.chat.common.User;
 import codeu.chat.util.Logger;
 import codeu.chat.util.Serializers;
@@ -37,7 +38,7 @@ import codeu.chat.util.connections.ConnectionSource;
 // calls.
 final class View implements BasicView {
 
-  private final static Logger.Log LOG = Logger.newLog(View.class);
+  private static final Logger.Log LOG = Logger.newLog(View.class);
 
   private final ConnectionSource source;
 
@@ -78,7 +79,8 @@ final class View implements BasicView {
       Serializers.INTEGER.write(connection.out(), NetworkCode.GET_ALL_CONVERSATIONS_REQUEST);
 
       if (Serializers.INTEGER.read(connection.in()) == NetworkCode.GET_ALL_CONVERSATIONS_RESPONSE) {
-        summaries.addAll(Serializers.collection(ConversationHeader.SERIALIZER).read(connection.in()));
+        summaries.addAll(
+            Serializers.collection(ConversationHeader.SERIALIZER).read(connection.in()));
       } else {
         LOG.error("Response from server failed.");
       }
@@ -101,8 +103,10 @@ final class View implements BasicView {
       Serializers.INTEGER.write(connection.out(), NetworkCode.GET_CONVERSATIONS_BY_ID_REQUEST);
       Serializers.collection(Uuid.SERIALIZER).write(connection.out(), ids);
 
-      if (Serializers.INTEGER.read(connection.in()) == NetworkCode.GET_CONVERSATIONS_BY_ID_RESPONSE) {
-        conversations.addAll(Serializers.collection(ConversationPayload.SERIALIZER).read(connection.in()));
+      if (Serializers.INTEGER.read(connection.in())
+          == NetworkCode.GET_CONVERSATIONS_BY_ID_RESPONSE) {
+        conversations.addAll(
+            Serializers.collection(ConversationPayload.SERIALIZER).read(connection.in()));
       } else {
         LOG.error("Response from server failed.");
       }
@@ -135,5 +139,23 @@ final class View implements BasicView {
     }
 
     return messages;
+  }
+
+  // gets info obj from server 
+  public ServerInfo getInfo() {
+    try (final Connection connection = source.connect()) {
+      Serializers.INTEGER.write(connection.out(), NetworkCode.SERVER_INFO_REQUEST);
+      if (Serializers.INTEGER.read(connection.in()) == NetworkCode.SERVER_INFO_RESPONSE) {
+        final Time startTime = Time.SERIALIZER.read(connection.in());
+        return new ServerInfo(startTime);
+      } else {
+        System.out.println("ERROR: Server did not respond with the type of response expected.");
+        LOG.error("Server did not respond with the type of response expected.");
+      }
+    } catch (Exception ex) {
+      System.out.println("ERROR: Something went wrong with the connection.");
+      LOG.error("Something went wrong with the connection.");
+    }
+    return null;
   }
 }

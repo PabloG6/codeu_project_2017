@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import codeu.chat.common.BasicView;
+import codeu.chat.common.ServerInfo;
 import codeu.chat.common.User;
 import codeu.chat.util.Uuid;
 import codeu.chat.util.connections.ConnectionSource;
@@ -46,5 +47,9 @@ public final class Context {
       users.add(new UserContext(user, view, controller));
     }
     return users;
+  }
+  
+  public ServerInfo getInfo() {
+	return view.getInfo();
   }
 }
