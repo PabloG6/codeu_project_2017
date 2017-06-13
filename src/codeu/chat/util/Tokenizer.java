@@ -10,6 +10,7 @@ public final class Tokenizer {
     boolean inQuotes = false;
     boolean lookingForEscapable = false;
 
+    //reads line and checks for quotes or double slashes, which are ignored to allow tokenization
     for (int i = 0; i < line.length(); i++) {
       char c = line.charAt(i);
       if (lookingForEscapable) {
@@ -23,6 +24,9 @@ public final class Tokenizer {
              '\' can only be found before backslash and quote");
         }
       }
+             
+      //reacds line and if there is a character following quotes, an IE error is thrown indicating that
+      //requested tokenization was not understood
       else {
         if (c == '\\')
           lookingForEscapable = true;
@@ -30,7 +34,7 @@ public final class Tokenizer {
           if (inQuotes) {
             if ((i + 1) < line.length() && !Character.isWhitespace(line.charAt(i+1)))
               throw new IllegalArgumentException
-              ("Character found right after quotation marks. Individual input sections unclear");
+              ("Character found right after quotation marks. Individual input sections unclear.");
             tokens.add(token.toString());
             token.setLength(0);
             inQuotes = false;
@@ -59,6 +63,7 @@ public final class Tokenizer {
     token = null;
   }
 
+  //makes sure entire line is read
   public boolean hasNext() {
     return !tokens.isEmpty();
   }
