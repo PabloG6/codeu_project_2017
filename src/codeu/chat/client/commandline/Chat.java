@@ -23,6 +23,7 @@ import codeu.chat.client.core.Context;
 import codeu.chat.client.core.ConversationContext;
 import codeu.chat.client.core.MessageContext;
 import codeu.chat.client.core.UserContext;
+import codeu.chat.common.ServerInfo;
 
 public final class Chat {
 
@@ -89,8 +90,22 @@ public final class Chat {
   // will be user selection focused.
   //
   private Panel createRootPanel(final Context context) {
-
+	    
     final Panel panel = new Panel();
+    
+	// command that uses getInfo() context
+	panel.register("info", new Panel.Command() {
+	  @Override
+	  public void invoke(Scanner args) {
+	    final ServerInfo info = context.getInfo();
+	    if (info == null) {
+	      System.out.println("ERROR: Server did not send us a valid info object");
+	  } else {
+	    System.out.println("Server has been running since " + info.startTime + ".");
+	    System.out.println("Server has been running for " + info.duration() + " seconds.");
+	    }
+	  }
+	});
 
     // HELP
     //
