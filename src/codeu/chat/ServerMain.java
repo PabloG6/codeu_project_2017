@@ -77,7 +77,7 @@ final class ServerMain {
     ) {
 
       LOG.info("Starting server...");
-      runServer(id, secret, serverSource, relaySource);
+      runServer(id, secret, serverSource, relaySource, persistentPath);
 
     } catch (IOException ex) {
 
@@ -89,13 +89,14 @@ final class ServerMain {
   private static void runServer(Uuid id,
                                 Secret secret,
                                 ConnectionSource serverSource,
-                                ConnectionSource relaySource) {
+                                ConnectionSource relaySource,
+                                File localFilePath) {
 
     final Relay relay = relaySource == null ?
                         new NoOpRelay() :
                         new RemoteRelay(relaySource);
 
-    final Server server = new Server(id, secret, relay);
+    final Server server = new Server(id, secret, relay, localFilePath);
 
     LOG.info("Created server.");
 
