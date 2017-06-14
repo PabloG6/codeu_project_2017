@@ -1,5 +1,7 @@
 package codeu.chat.common;
 
+import java.io.IOException;
+
 import codeu.chat.util.Time;
 
 // holds server info
