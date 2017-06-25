@@ -16,14 +16,15 @@ package codeu.chat.client.commandline;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.Stack;
 
 import codeu.chat.client.core.Context;
 import codeu.chat.client.core.ConversationContext;
 import codeu.chat.client.core.MessageContext;
 import codeu.chat.client.core.UserContext;
-import codeu.chat.common.ServerInfo;
+
+import codeu.chat.util.Tokenizer;
+import codeu.chat.util.Time;
 
 public final class Chat {
 
@@ -35,9 +36,11 @@ public final class Chat {
   // panel to the top of the stack. When a command wants to go to the previous
   // panel all it needs to do is pop the top panel.
   private final Stack<Panel> panels = new Stack<>();
+  private final Context context;
 
   public Chat(Context context) {
     this.panels.push(createRootPanel(context));
+    this.context = context;
   }
 
   // HANDLE COMMAND
@@ -47,15 +50,23 @@ public final class Chat {
   // the system wants to exit, the function will return false.
   //
   public boolean handleCommand(String line) {
+    final Tokenizer tokens;
+    final String command;
 
-    final Scanner tokens = new Scanner(line.trim());
+    try {
+      tokens = new Tokenizer(line.trim());
+      command = tokens.hasNext() ? tokens.next() : "";
+    }
+    catch (IllegalArgumentException e) {
+      // Catch any misformatting or unclear input here
+      // and still continue processing future commands
+      System.out.println("Misformatted Input: " + e.getMessage());
+      return true;
+    }
 
-    final String command = tokens.hasNext() ? tokens.next() : "";
-
-    // Because "exit" and "back" are applicable to every panel, handle
+    // Because "exit", "back", and "version" are applicable to every panel, handle
     // those commands here to avoid having to implement them for each
     // panel.
-
     if ("exit".equals(command)) {
       // The user does not want to process any more commands
       return false;
@@ -67,10 +78,23 @@ public final class Chat {
       return true;
     }
 
+    // Returns the version of the server
+    if ("version".equals(command)) {
+      System.out.println("This is server version # " + context.Version());
+      return true;
+    }
+
+    // Returns how long the server has been running
+    if ("uptime".equals(command)) {
+      System.out.println("Server has been running for " + Time.formatTimeString(context.Uptime()));
+      return true;
+    }
+
     if (panels.peek().handleCommand(command, tokens)) {
       // the command was handled
       return true;
     }
+
 
     // If we get to here it means that the command was not correctly handled
     // so we should let the user know. Still return true as we want to continue
@@ -90,22 +114,8 @@ public final class Chat {
   // will be user selection focused.
   //
   private Panel createRootPanel(final Context context) {
-	    
+
     final Panel panel = new Panel();
-    
-	// command that uses getInfo() context
-	panel.register("info", new Panel.Command() {
-	  @Override
-	  public void invoke(Scanner args) {
-	    final ServerInfo info = context.getInfo();
-	    if (info == null) {
-	      System.out.println("ERROR: Server did not send us a valid info object");
-	  } else {
-	    System.out.println("Server has been running since " + info.startTime + ".");
-	    System.out.println("Server has been running for " + info.duration() + " seconds.");
-	    }
-	  }
-	});
 
     // HELP
     //
@@ -114,7 +124,7 @@ public final class Chat {
     //
     panel.register("help", new Panel.Command() {
       @Override
-      public void invoke(Scanner args) {
+      public void invoke(Tokenizer args) {
         System.out.println("ROOT MODE");
         System.out.println("  u-list");
         System.out.println("    List all users.");
@@ -122,6 +132,10 @@ public final class Chat {
         System.out.println("    Add a new user with the given name.");
         System.out.println("  u-sign-in <name>");
         System.out.println("    Sign in as the user with the given name.");
+        System.out.println("  uptime");
+        System.out.println("    Display how long server has been running.");
+        System.out.println("  version");
+        System.out.println("    Display server version number.");
         System.out.println("  exit");
         System.out.println("    Exit the program.");
       }
@@ -134,7 +148,7 @@ public final class Chat {
     //
     panel.register("u-list", new Panel.Command() {
       @Override
-      public void invoke(Scanner args) {
+      public void invoke(Tokenizer args) {
         for (final UserContext user : context.allUsers()) {
           System.out.format(
               "USER %s (UUID:%s)\n",
@@ -151,9 +165,12 @@ public final class Chat {
     //
     panel.register("u-add", new Panel.Command() {
       @Override
-      public void invoke(Scanner args) {
-        final String name = args.hasNext() ? args.nextLine().trim() : "";
-        if (name.length() > 0) {
+      public void invoke(Tokenizer args) {
+        final String name = args.hasNext() ? args.next().trim() : "";
+        if (args.hasNext()) {
+          System.out.println("ERROR: Too many arguments for command");
+        }
+        else if (name.length() > 0) {
           if (context.create(name) == null) {
             System.out.println("ERROR: Failed to create new user");
           }
@@ -170,9 +187,12 @@ public final class Chat {
     //
     panel.register("u-sign-in", new Panel.Command() {
       @Override
-      public void invoke(Scanner args) {
-        final String name = args.hasNext() ? args.nextLine().trim() : "";
-        if (name.length() > 0) {
+      public void invoke(Tokenizer args) {
+        final String name = args.hasNext() ? args.next().trim() : "";
+        if (args.hasNext()) {
+          System.out.println("ERROR: Too many arguments for command");
+        }
+        else if (name.length() > 0) {
           final UserContext user = findUser(name);
           if (user == null) {
             System.out.format("ERROR: Failed to sign in as '%s'\n", name);
@@ -212,7 +232,7 @@ public final class Chat {
     //
     panel.register("help", new Panel.Command() {
       @Override
-      public void invoke(Scanner args) {
+      public void invoke(Tokenizer args) {
         System.out.println("USER MODE");
         System.out.println("  c-list");
         System.out.println("    List all conversations that the current user can interact with.");
@@ -220,14 +240,30 @@ public final class Chat {
         System.out.println("    Add a new conversation with the given title and join it as the current user.");
         System.out.println("  c-join <title>");
         System.out.println("    Join the conversation as the current user.");
+        System.out.println("  u-follow <name>");
+        System.out.println("    Follow a user to get updates on new user activity.");
+        System.out.println("  u-unfollow <name>");
+        System.out.println("    Unfollow a user to stop updates from user activity.");
+        System.out.println("  c-follow <title>");
+        System.out.println("    Follow a conversation to get updates on new messages.");
+        System.out.println("  c-unfollow <title>");
+        System.out.println("    Unfollow a conversation to stop updates from conversation.");
+        System.out.println("  status-update");
+        System.out.println("    Retrieve updates on users and conversations current user is following.");
         System.out.println("  info");
-        System.out.println("    Display all info for the current user");
+        System.out.println("    Display all info for the current user.");
+        System.out.println("  uptime");
+        System.out.println("    Display how long server has been running.");
+        System.out.println("  version");
+        System.out.println("    Display server version number.");
         System.out.println("  back");
         System.out.println("    Go back to ROOT MODE.");
         System.out.println("  exit");
         System.out.println("    Exit the program.");
       }
     });
+
+
 
     // C-LIST (list conversations)
     //
@@ -236,7 +272,7 @@ public final class Chat {
     //
     panel.register("c-list", new Panel.Command() {
       @Override
-      public void invoke(Scanner args) {
+      public void invoke(Tokenizer args) {
         for (final ConversationContext conversation : user.conversations()) {
           System.out.format(
               "CONVERSATION %s (UUID:%s)\n",
@@ -253,9 +289,12 @@ public final class Chat {
     //
     panel.register("c-add", new Panel.Command() {
       @Override
-      public void invoke(Scanner args) {
-        final String name = args.hasNext() ? args.nextLine().trim() : "";
-        if (name.length() > 0) {
+      public void invoke(Tokenizer args) {
+        final String name = args.hasNext() ? args.next().trim() : "";
+        if (args.hasNext()) {
+          System.out.println("ERROR: Too many arguments for command");
+        }
+        else if (name.length() > 0) {
           final ConversationContext conversation = user.start(name);
           if (conversation == null) {
             System.out.println("ERROR: Failed to create new conversation");
@@ -268,6 +307,159 @@ public final class Chat {
       }
     });
 
+    // STATUS-UPDATE (status update)
+    //
+    // Add a command that will give users information on items they are following
+    //
+    panel.register("status-update", new Panel.Command() {
+      @Override
+      public void invoke(Tokenizer args) {
+        System.out.print("Status Updates!\n" + user.statusUpdate());
+      }
+    });
+
+    // U-FOLLOW (follow user)
+    //
+    // Add a command that will follow user activity when the user enters
+    // "u-follow" while on the user panel.
+    //
+    panel.register("u-follow", new Panel.Command() {
+      @Override
+      public void invoke(Tokenizer args) {
+        final String name = args.hasNext() ? args.next().trim() : "";
+        if (args.hasNext()) {
+          System.out.println("ERROR: Too many arguments for command");
+        } else if (name.length() > 0) {
+          final UserContext userB = findUser(name);
+          if (user == null) {
+            System.out.format("ERROR: Failed to sign in as '%s'\n", name);
+          } else {
+            user.followUser(userB.user);
+          }
+        } else {
+          System.out.println("ERROR: Missing <username>");
+        }
+      }
+
+      // Find the first user with the given name and return a user context
+      // for that user. If no user is found, the function will return null.
+      private UserContext findUser(String name) {
+        for (final UserContext user : context.allUsers()) {
+          if (user.user.name.equals(name)) {
+            return user;
+          }
+        }
+        return null;
+      }
+    });
+
+    // U-UNFOLLOW (follow user)
+    //
+    // Add a command that will unfollow user activity when the user enters
+    // "u-unfollow" while on the user panel.
+    //
+    panel.register("u-unfollow", new Panel.Command() {
+      @Override
+      public void invoke(Tokenizer args) {
+        final String name = args.hasNext() ? args.next().trim() : "";
+        if (args.hasNext()) {
+          System.out.println("ERROR: Too many arguments for command");
+        } else if (name.length() > 0) {
+          final UserContext userB = findUser(name);
+          if (user == null) {
+            System.out.format("ERROR: Failed to sign in as '%s'\n", name);
+          } else {
+            user.unfollowUser(userB.user);
+          }
+        } else {
+          System.out.println("ERROR: Missing <username>");
+        }
+      }
+
+      // Find the first user with the given name and return a user context
+      // for that user. If no user is found, the function will return null.
+      private UserContext findUser(String name) {
+        for (final UserContext user : context.allUsers()) {
+          if (user.user.name.equals(name)) {
+            return user;
+          }
+        }
+        return null;
+      }
+    });
+
+    // C-UNFOLLOW (unfollow conversation)
+    //
+    // Add a command that will unfollow a conversation when the user enters
+    // "c-unfollow" while on the user panel.
+    //
+    panel.register("c-unfollow", new Panel.Command() {
+      @Override
+      public void invoke(Tokenizer args) {
+        final String name = args.hasNext() ? args.next().trim() : "";
+        if (args.hasNext()) {
+          System.out.println("ERROR: Too many arguments for command");
+        }
+        else if (name.length() > 0) {
+          final ConversationContext conversation = find(name);
+          if (conversation == null) {
+            System.out.format("ERROR: No conversation with name '%s'\n", name);
+          } else {
+            user.unfollowConversation(conversation.conversation.id);
+          }
+        } else {
+          System.out.println("ERROR: Missing <title>");
+        }
+      }
+
+      // Find the first conversation with the given name and return its context.
+      // If no conversation has the given name, this will return null.
+      private ConversationContext find(String title) {
+        for (final ConversationContext conversation : user.conversations()) {
+          if (title.equals(conversation.conversation.title)) {
+            return conversation;
+          }
+        }
+        return null;
+      }
+    });
+
+    // C-FOLLOW (follow conversation)
+    //
+    // Add a command that will follow a conversation when the user enters
+    // "c-follow" while on the user panel.
+    //
+    panel.register("c-follow", new Panel.Command() {
+      @Override
+      public void invoke(Tokenizer args) {
+        final String name = args.hasNext() ? args.next().trim() : "";
+        if (args.hasNext()) {
+          System.out.println("ERROR: Too many arguments for command");
+        }
+        else if (name.length() > 0) {
+          final ConversationContext conversation = find(name);
+          if (conversation == null) {
+            System.out.format("ERROR: No conversation with name '%s'\n", name);
+          } else {
+            user.followConversation(conversation.conversation.id);
+          }
+        } else {
+          System.out.println("ERROR: Missing <title>");
+        }
+      }
+
+      // Find the first conversation with the given name and return its context.
+      // If no conversation has the given name, this will return null.
+      private ConversationContext find(String title) {
+        for (final ConversationContext conversation : user.conversations()) {
+          if (title.equals(conversation.conversation.title)) {
+            return conversation;
+          }
+        }
+        return null;
+      }
+    });
+
     // C-JOIN (join conversation)
     //
     // Add a command that will joing a conversation when the user enters
@@ -275,9 +467,12 @@ public final class Chat {
     //
     panel.register("c-join", new Panel.Command() {
       @Override
-      public void invoke(Scanner args) {
-        final String name = args.hasNext() ? args.nextLine().trim() : "";
-        if (name.length() > 0) {
+      public void invoke(Tokenizer args) {
+        final String name = args.hasNext() ? args.next().trim() : "";
+        if (args.hasNext()) {
+          System.out.println("ERROR: Too many arguments for command");
+        }
+        else if (name.length() > 0) {
           final ConversationContext conversation = find(name);
           if (conversation == null) {
             System.out.format("ERROR: No conversation with name '%s'\n", name);
@@ -308,7 +503,7 @@ public final class Chat {
     //
     panel.register("info", new Panel.Command() {
       @Override
-      public void invoke(Scanner args) {
+      public void invoke(Tokenizer args) {
         System.out.println("User Info:");
         System.out.format("  Name : %s\n", user.user.name);
         System.out.format("  Id   : UUID:%s\n", user.user.id);
@@ -331,7 +526,7 @@ public final class Chat {
     //
     panel.register("help", new Panel.Command() {
       @Override
-      public void invoke(Scanner args) {
+      public void invoke(Tokenizer args) {
         System.out.println("USER MODE");
         System.out.println("  m-list");
         System.out.println("    List all messages in the current conversation.");
@@ -339,6 +534,10 @@ public final class Chat {
         System.out.println("    Add a new message to the current conversation as the current user.");
         System.out.println("  info");
         System.out.println("    Display all info about the current conversation.");
+        System.out.println("  uptime");
+        System.out.println("    Display how long server has been running.");
+        System.out.println("  version");
+        System.out.println("    Display server version number.");
         System.out.println("  back");
         System.out.println("    Go back to USER MODE.");
         System.out.println("  exit");
@@ -353,7 +552,7 @@ public final class Chat {
     //
     panel.register("m-list", new Panel.Command() {
       @Override
-      public void invoke(Scanner args) {
+      public void invoke(Tokenizer args) {
         System.out.println("--- start of conversation ---");
         for (MessageContext message = conversation.firstMessage();
                             message != null;
@@ -376,9 +575,12 @@ public final class Chat {
     //
     panel.register("m-add", new Panel.Command() {
       @Override
-      public void invoke(Scanner args) {
-        final String message = args.hasNext() ? args.nextLine().trim() : "";
-        if (message.length() > 0) {
+      public void invoke(Tokenizer args) {
+        final String message = args.hasNext() ? args.next().trim() : "";
+        if (args.hasNext()) {
+          System.out.println("ERROR: Too many arguments for command");
+        }
+        else if (message.length() > 0) {
           conversation.add(message);
         } else {
           System.out.println("ERROR: Messages must contain text");
@@ -393,7 +595,7 @@ public final class Chat {
     //
     panel.register("info", new Panel.Command() {
       @Override
-      public void invoke(Scanner args) {
+      public void invoke(Tokenizer args) {
         System.out.println("Conversation Info:");
         System.out.format("  Title : %s\n", conversation.conversation.title);
         System.out.format("  Id    : UUID:%s\n", conversation.conversation.id);
