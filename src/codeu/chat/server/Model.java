@@ -1,22 +1,3 @@
-Skip to content
-This repository
-Search
-Pull requests
-Issues
-Marketplace
-Gist
- @charlinds
- Sign out
- Watch 3
-  Star 0
-  Fork 0 jedouard98/codeu_summer_2017
- Code  Issues 0  Pull requests 2  Projects 0  Wiki Insights 
-Tree: 6ec1573535 Find file Copy pathcodeu_summer_2017/src/codeu/chat/server/Model.java
-6ec1573  9 hours ago
-@jedouard98 jedouard98 Updated model to support follow methods
-2 contributors @jedouard98 @vaage
-RawBlameHistory      
-184 lines (145 sloc)  6.12 KB
 // Copyright 2017 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -200,5 +181,3 @@ public final class Model {
     return messageByText;
   }
 }
-Contact GitHub API Training Shop Blog About
-© 2017 GitHub, Inc. Terms Privacy Security Status Help
