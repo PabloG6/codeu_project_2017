@@ -3,9 +3,10 @@
 package codeu.chat.util;
 
 import static org.junit.Assert.*; 
-import java.io.IOException;import org.junit.Test;
+import java.io.IOException;
+import org.junit.Test;
 
-public final class TokenizerTest {    
+public final class TokenizerTest {� 
 
   //test with quotes
   @Test
@@ -15,7 +16,7 @@ public final class TokenizerTest {   
     assertEquals(tokenizer.next(), "hello world");
     assertEquals(tokenizer.next(), "how are you");
     assertEquals(tokenizer.next(), null);
-   } 
+   }
     
    //test with no quotes
    @Test
@@ -29,4 +30,4 @@ public final class TokenizerTest {   
      assertEquals(tokenizer.next(), "you");
      assertEquals(tokenizer.next(), null);
     }
-} 
+}
