@@ -76,7 +76,7 @@ final class ServerMain {
         final ConnectionSource relaySource = relayAddress == null ? null : new ClientConnectionSource(relayAddress.host, relayAddress.port)
     ) {
 
-      LOG.info("Starting o...");
+      LOG.info("Starting server...");
       runServer(id, secret, serverSource, relaySource);
 
     } catch (IOException ex) {
