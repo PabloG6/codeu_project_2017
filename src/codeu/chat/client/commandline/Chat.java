@@ -17,7 +17,6 @@ package codeu.chat.client.commandline;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -161,8 +160,7 @@ public final class Chat {
     panel.register("u-add", new Panel.Command() {
       @Override
       public void invoke(List<String> args) {
-    	Iterator<String> stringIterator = args.iterator();
-        final String name = stringIterator.hasNext() ? stringIterator.next().trim() : "";
+    	final String name = args.isEmpty() ? "" : args.get(0).trim();
         if (name.length() > 0) {
           if (context.create(name) == null) {
             System.out.println("ERROR: Failed to create new user");
@@ -181,8 +179,7 @@ public final class Chat {
     panel.register("u-sign-in", new Panel.Command() {
       @Override
       public void invoke(List<String> args) {
-    	Iterator<String> stringIterator = args.iterator();
-        final String name = stringIterator.hasNext() ? stringIterator.next().trim() : "";
+    	final String name = args.isEmpty() ? "" : args.get(0).trim();
         if (name.length() > 0) {
           final UserContext user = findUser(name);
           if (user == null) {
@@ -265,8 +262,7 @@ public final class Chat {
     panel.register("c-add", new Panel.Command() {
       @Override
       public void invoke(List<String> args) {
-    	Iterator<String> stringIterator = args.iterator();
-        final String name = stringIterator.hasNext() ? stringIterator.next().trim() : "";
+    	final String name = args.isEmpty() ? "" : args.get(0).trim();
         if (name.length() > 0) {
           final ConversationContext conversation = user.start(name);
           if (conversation == null) {
@@ -288,8 +284,7 @@ public final class Chat {
     panel.register("c-join", new Panel.Command() {
       @Override
       public void invoke(List<String> args) {
-    	Iterator<String> stringIterator = args.iterator();
-        final String name = stringIterator.hasNext() ? stringIterator.next().trim() : "";
+    	final String name = args.isEmpty() ? "" : args.get(0).trim();
         if (name.length() > 0) {
           final ConversationContext conversation = find(name);
           if (conversation == null) {
@@ -390,8 +385,7 @@ public final class Chat {
     panel.register("m-add", new Panel.Command() {
       @Override
       public void invoke(List<String> args) {
-    	  Iterator<String> stringIterator = args.iterator();
-          final String message = stringIterator.hasNext() ? stringIterator.next().trim() : "";
+    	final String message = args.isEmpty() ? "" : args.get(0).trim();
         if (message.length() > 0) {
           conversation.add(message);
         } else {
