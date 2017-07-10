@@ -14,6 +14,7 @@
 
 package codeu.chat.client.commandline;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -24,6 +25,7 @@ import codeu.chat.client.core.ConversationContext;
 import codeu.chat.client.core.MessageContext;
 import codeu.chat.client.core.UserContext;
 import codeu.chat.common.ServerInfo;
+import codeu.chat.util.Tokenizer;
 
 public final class Chat {
 
@@ -93,6 +95,20 @@ public final class Chat {
 
         final Panel panel = new Panel();
 
+        // command that uses getInfo() context
+        panel.register("info", new Panel.Command() {
+            @Override
+            public void invoke(Scanner args) {
+                final ServerInfo info = context.getInfo();
+                if (info == null) {
+                    System.out.println("ERROR: Server did not send us a valid info object");
+                } else {
+                    System.out.println("Server has been running since " + info.startTime + ".");
+                    System.out.println("Server has been running for " + info.duration() + " seconds.");
+                }
+            }
+        });
+
         // HELP
         //
         // Add a command to print a list of all commands and their description when
@@ -101,7 +117,7 @@ public final class Chat {
         panel.register("help", new Panel.Command() {
             @Override
             public void invoke(Scanner args) {
-                System.out.println("ROOT NODE");
+                System.out.println("ROOT MODE");
                 System.out.println("  u-list");
                 System.out.println("    List all users.");
                 System.out.println("  u-add <name>");
@@ -109,23 +125,32 @@ public final class Chat {
                 System.out.println("  u-sign-in <name>");
                 System.out.println("    Sign in as the user with the given name.");
                 System.out.println("  info");
-                System.out.println("    Shows the current version of the Chat Relay app");
+                System.out.println("    Get information from the session.");
                 System.out.println("  exit");
                 System.out.println("    Exit the program.");
-
             }
         });
 
+
+        // info
+        //
+        // Gets infomation from server using version check
+        //
         panel.register("info", new Panel.Command() {
             @Override
-            public void invoke(Scanner line) {
-                final ServerInfo info = context.getServerInfo();
-                if(info == null) {
-                    System.out.println("Server did not send a valid response. Please try again");
+            public void invoke(Scanner args) {
+                final ServerInfo info = context.getInfo();
+                if (info == null) {
+                    // Communicate error to user - the server did not send us a valid
+                    // info object.
+                    new IOException("ERROR: ServerInfo cannot be read.").printStackTrace();
                 } else {
-                    System.out.format("CODE U CHAT CLIENT SERVER VERSION: %s \n", info.version);
+                    //Print server info
+                    System.out.println("Version:" + info.version);
                 }
             }
+
+
         });
 
         // U-LIST (user list)
@@ -164,7 +189,6 @@ public final class Chat {
             }
         });
 
-
         // U-SIGN-IN (sign in user)
         //
         // Add a command to sign-in as a user when the user enters "u-sign-in"
@@ -200,7 +224,6 @@ public final class Chat {
 
         // Now that the panel has all its commands registered, return the panel
         // so that it can be used.
-
         return panel;
     }
 
@@ -318,12 +341,10 @@ public final class Chat {
             }
         });
 
-
         // Now that the panel has all its commands registered, return the panel
         // so that it can be used.
         return panel;
     }
-
 
     private Panel createConversationPanel(final ConversationContext conversation) {
 

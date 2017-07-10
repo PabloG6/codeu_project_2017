@@ -14,18 +14,23 @@
 
 package codeu.chat.client.core;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.io.IOException;
 
-import codeu.chat.common.*;
+import codeu.chat.common.BasicView;
+import codeu.chat.common.ConversationHeader;
+import codeu.chat.common.ConversationPayload;
+import codeu.chat.common.Message;
+import codeu.chat.common.NetworkCode;
+import codeu.chat.common.ServerInfo;
+import codeu.chat.common.User;
 import codeu.chat.util.Logger;
 import codeu.chat.util.Serializers;
 import codeu.chat.util.Time;
 import codeu.chat.util.Uuid;
 import codeu.chat.util.connections.Connection;
 import codeu.chat.util.connections.ConnectionSource;
-import sun.nio.ch.Net;
 
 // VIEW
 //
@@ -35,7 +40,7 @@ import sun.nio.ch.Net;
 final class View implements BasicView {
 
   private final static Logger.Log LOG = Logger.newLog(View.class);
-
+  Time startTime = Time.now();
   private final ConnectionSource source;
 
   public View(ConnectionSource source) {
@@ -95,7 +100,7 @@ final class View implements BasicView {
       Serializers.INTEGER.write(connection.out(), NetworkCode.SERVER_INFO_REQUEST);
       if(Serializers.INTEGER.read(connection.in()) == NetworkCode.SERVER_INFO_RESPONSE) {
         final Uuid version = Uuid.SERIALIZER.read(connection.in());
-        return new ServerInfo(version);
+        return new ServerInfo(version, startTime);
       } else {
         System.out.println("Oops, something wen't wrong. Please try again");
       }
@@ -153,4 +158,26 @@ final class View implements BasicView {
 
     return messages;
   }
+
+  //gets info obj from server
+  public ServerInfo getInfo() {
+
+    try (final Connection connection = source.connect()) {
+
+      Serializers.INTEGER.write(connection.out(), NetworkCode.SERVER_INFO_REQUEST);
+
+      if (Serializers.INTEGER.read(connection.in()) == NetworkCode.SERVER_INFO_RESPONSE) {
+        final Time startTime = Time.SERIALIZER.read(connection.in());
+        return new ServerInfo(startTime);
+      } else {
+        System.out.println("ERROR: Server did not respond with the type of response expected.");
+        LOG.error("Server did not respond with the type of response expected.");
+      }
+    } catch (Exception ex) {
+      System.out.println("ERROR: Something went wrong with the connection.");
+      LOG.error("Something went wrong with the connection.");
+   }
+
+   return null;
+ }
 }
