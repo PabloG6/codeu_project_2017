@@ -1,75 +1,71 @@
 package codeu.chat.util;
 
-import java.util.LinkedList;
+import java.io.IOException;
 
 public final class Tokenizer {
-  private LinkedList<String> tokens = new LinkedList<String>();
-
-  public Tokenizer(String line) {
-    StringBuilder token = new StringBuilder();
-    boolean inQuotes = false;
-    boolean lookingForEscapable = false;
-
-    //reads line and checks for quotes or double slashes, which are ignored to allow tokenization
-    for (int i = 0; i < line.length(); i++) {
-      char c = line.charAt(i);
-      if (lookingForEscapable) {
-        if (c == '\\' || c == '"') {
-          token.append(c);
-          lookingForEscapable = false;
-        }
-        else {
-          throw new IllegalArgumentException
-            ("Backslash found before unescapable character. 
-             '\' can only be found before backslash and quote");
-        }
-      }
-             
-      //reacds line and if there is a character following quotes, an IE error is thrown indicating that
-      //requested tokenization was not understood
-      else {
-        if (c == '\\')
-          lookingForEscapable = true;
-        else if (c == '"') {
-          if (inQuotes) {
-            if ((i + 1) < line.length() && !Character.isWhitespace(line.charAt(i+1)))
-              throw new IllegalArgumentException
-              ("Character found right after quotation marks. Individual input sections unclear.");
-            tokens.add(token.toString());
-            token.setLength(0);
-            inQuotes = false;
-          }
-          else {
-            if ((i - 1) > 0 && !Character.isWhitespace(line.charAt(i-1)))
-              throw new IllegalArgumentException
-              ("Character found right before quotation marks. Individual input sections unclear");
-            inQuotes = true;
-          }
-        }
-        else if (Character.isWhitespace(c) && !inQuotes) {
-          if (token.length() != 0) {
-            tokens.add(token.toString());
-            token.setLength(0);
-          }
-        }
-        else {
-          token.append(c);
-          lookingForEscapable = false;
-        }
-      }
-    }
-
-    tokens.add(token.toString());
-    token = null;
+  private StringBuilder token;
+  private String source;
+  private int at;
+	
+  public Tokenizer(String source) {
+	this.token = new StringBuilder();
+	this.source = source;
+	this.at = 0;
   }
-
-  //makes sure entire line is read
-  public boolean hasNext() {
-    return !tokens.isEmpty();
+  
+  public String next() throws IOException {
+	//skip all leading whitespace
+	while(remaining() > 0 && Character.isWhitespace(peek())) {
+	  read(); //ignore the result because we already know that it is a whitespace character
+	}
+	if(remaining() <= 0) {
+      return null;
+	} else if(peek() == '"') {
+	  //read a token that is surrounded by quotes
+      return readWithQuotes();
+	} else {
+	  //read a token that is not surrounded by quotes
+      return readWithNoQuotes();
+	}
   }
-
-  public String next() {
-    return tokens.removeFirst();
+  
+  public int remaining() {
+    return source.length() - at;
+  }
+  
+  private char peek() throws IOException {
+	if(at < source.length()) {
+      return source.charAt(at);
+	} else {
+	  //throw an exception
+		throw new IOException("No char at the position.");
+	}
+  }
+  
+  private char read() throws IOException {
+	final char c = peek();
+	at += 1;
+	return c;
+  }
+  
+  private String readWithNoQuotes() throws IOException {
+	token.setLength(0);
+	while(remaining() > 0 && !Character.isWhitespace(peek())) {
+	  token.append(read());
+	}
+	return token.toString();
+  }
+  
+  private String readWithQuotes() throws IOException {
+	token.setLength(0);
+	if(read() != '"') {
+      throw new IOException("Strings must start with opening quote");
+	}
+	while(peek() != '=') {
+	  token.append(read());
+	}
+	read();
+	return token.toString();
   }
 
 }
