@@ -37,12 +37,6 @@ public final class Storage implements Serializable {
         this.messageContext = messageContext;
     }
 
-    public void enqueue(Message message) {
-        messageQueue.add(message);
-
-        conversationMap.put(message.id, message);
-
-    }
 
 
     public boolean write(Message message) {
