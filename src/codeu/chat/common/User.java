@@ -23,6 +23,8 @@ import codeu.chat.util.Serializers;
 import codeu.chat.util.Time;
 import codeu.chat.util.Uuid;
 
+import java.util.ArrayList;
+
 public final class User {
 
   public static final Serializer<User> SERIALIZER = new Serializer<User>() {
@@ -51,12 +53,48 @@ public final class User {
   public final Uuid id;
   public final String name;
   public final Time creation;
+  
+  public ArrayList<UserFollowing> following;
+  public ArrayList<UserFollowing> followers;
 
   public User(Uuid id, String name, Time creation) {
 
     this.id = id;
     this.name = name;
     this.creation = creation;
+    
+    this.following = new ArrayList<UserFollowing>();
+    this.followers = new ArrayList<UserFollowing>();
+  }
 
+  public String statusUpdate() {
+    StringBuilder status = new StringBuilder();
+    for (UserFollowing connection : following)
+      status.append(connection.statusUpdate());
+    return status.toString();
+  }
+
+  //user A following user B
+  public static void follow(User userA, User userB) {
+    UserFollowing connection = new UserFollowing(userA, userB);
+    userA.following.add(connection);
+    userB.followers.add(connection);
+  }
+
+  //user A unfollowing user B
+  public static void unfollow(User userA, User userB) {
+    UserFollowing connection = new UserFollowing(userA, userB);
+    userA.following.remove(connection);
+    userB.followers.remove(connection);
+  }
+
+  public void addCreatedConversation(ConversationHeader conversation) {
+    for (UserFollowing follower : followers)
+      follower.addCreatedConversation(conversation);
+  }
+
+  public void addJoinedConversation(ConversationHeader conversation) {
+    for (UserFollowing follower : followers)
+      follower.addJoinedConversation(conversation);
   }
 }

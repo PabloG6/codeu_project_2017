@@ -71,6 +71,80 @@ public final class Server {
     this.controller = new Controller(id, model);
     this.relay = relay;
 
+    // New Status Update
+    this.commands.put(NetworkCode.NEW_STATUS_UPDATE_REQUEST, new Command() {
+      @Override
+      public void onMessage(InputStream in, OutputStream out) throws IOException {
+
+        final Uuid user = Uuid.SERIALIZER.read(in);
+
+        String statusUpdate = controller.newStatusUpdate(user);
+
+        Serializers.INTEGER.write(out, NetworkCode.NEW_STATUS_UPDATE_RESPONSE);
+        Serializers.STRING.write(out, statusUpdate);
+      }
+    });
+
+    // New Unfollow User
+    this.commands.put(NetworkCode.NEW_UNFOLLOW_USER_REQUEST, new Command() {
+      @Override
+      public void onMessage(InputStream in, OutputStream out) throws IOException {
+
+        final User userA = User.SERIALIZER.read(in);
+        final User userB = User.SERIALIZER.read(in);
+
+        controller.unfollowUser(userA, userB);
+
+        Serializers.INTEGER.write(out, NetworkCode.NEW_UNFOLLOW_USER_RESPONSE);
+      }
+
+    });
+
+    // New Follow User
+    this.commands.put(NetworkCode.NEW_FOLLOW_USER_REQUEST, new Command() {
+      @Override
+      public void onMessage(InputStream in, OutputStream out) throws IOException {
+
+        final User userA = User.SERIALIZER.read(in);
+        final User userB = User.SERIALIZER.read(in);
+
+        controller.followUser(userA, userB);
+ 
+        Serializers.INTEGER.write(out, NetworkCode.NEW_FOLLOW_USER_RESPONSE);
+      }
+
+    });
+    
+    // New Unfollow Conversation
+    this.commands.put(NetworkCode.NEW_UNFOLLOW_CONVERSATION_REQUEST, new Command() {
+      @Override
+      public void onMessage(InputStream in, OutputStream out) throws IOException {
+
+        final Uuid user = Uuid.SERIALIZER.read(in);
+        final Uuid conversation = Uuid.SERIALIZER.read(in);
+
+        controller.unfollowConversation(user, conversation);
+
+        Serializers.INTEGER.write(out, NetworkCode.NEW_UNFOLLOW_CONVERSATION_RESPONSE);
+      }
+ 
+    });
+ 
+    // New Follow Conversation
+    this.commands.put(NetworkCode.NEW_FOLLOW_CONVERSATION_REQUEST, new Command() {
+      @Override
+      public void onMessage(InputStream in, OutputStream out) throws IOException {
+
+        final Uuid user = Uuid.SERIALIZER.read(in);
+        final Uuid conversation = Uuid.SERIALIZER.read(in);
+
+        controller.followConversation(user, conversation);
+
+        Serializers.INTEGER.write(out, NetworkCode.NEW_FOLLOW_CONVERSATION_RESPONSE);
+      }
+
+    });
+    
     // msg when request for server info
     this.commands.put(NetworkCode.SERVER_INFO_REQUEST, new Command() {
       @Override
