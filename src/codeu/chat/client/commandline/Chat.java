@@ -55,7 +55,7 @@ public final class Chat {
   //
   public boolean handleCommand(String line) throws IOException {
 	  
-	final List<String> args = new ArrayList<>();
+	  final List<String> args = new ArrayList<>();
 	  final Tokenizer tokenizer = new Tokenizer(line);
 	  for(String token = tokenizer.next(); token != null; token = tokenizer.next()) {
 	    args.add(token);
@@ -103,6 +103,20 @@ public final class Chat {
   private Panel createRootPanel(final Context context) {
 
     final Panel panel = new Panel();
+   
+  	// command that uses getInfo() context
+	  panel.register("info", new Panel.Command() {
+	  @Override
+	  public void invoke(List<String> args) {
+	    final ServerInfo info = context.getInfo();
+	    if (info == null) {
+	      System.out.println("ERROR: Server did not send us a valid info object");
+	  } else {
+	    System.out.println("Server has been running since " + info.startTime + ".");
+	    System.out.println("Server has been running for " + info.duration() + " seconds.");
+	    }
+	  }
+	});
 
     // HELP
     //
