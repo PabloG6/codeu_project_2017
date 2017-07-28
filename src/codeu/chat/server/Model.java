@@ -141,4 +141,14 @@ public final class Model {
   public StoreAccessor<String, Message> messageByText() {
     return messageByText;
   }
+  
+  public void changeAuthority(ConversationHeader conversation, Uuid targetUser) {
+    HashMap<Uuid, integer> userAuthroity;
+    if (authority.get(conversation) == null) {
+      authority.put(conversation, new HashMap<>();
+    }
+    userAuthority = authority.get(conversation.id);
+    //not sure what the put call should have
+    //userAuthority.put(??, ??);
+  }
 }
