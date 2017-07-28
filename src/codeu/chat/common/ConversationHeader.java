@@ -77,14 +77,17 @@ public final class ConversationHeader {
   public final Uuid owner;
   public final Time creation;
   public final String title;
-  public HashMap<Uuid, Integer> userCategory = newHashMap<Uuid, integer>();s
+  public HashMap<Uuid, Integer> userCategory = newHashMap<Uuid, integer>();
 
   public ConversationHeader(Uuid id, Uuid owner, Time creation, String title) {
 
+    permission permissionLevel = permission.creator;
+    
     this.id = id;
     this.owner = owner;
     this.creation = creation;
     this.title = title;
 
+    this.userCategory.put(owner, permissionLevel.getLevel());
   }
 }
