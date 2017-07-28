@@ -17,6 +17,8 @@ package codeu.chat.common;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Map;
+import java.util.HashMap;
 
 import codeu.chat.util.Serializer;
 import codeu.chat.util.Serializers;
@@ -48,12 +50,34 @@ public final class ConversationHeader {
       );
 
     }
+    
   };
 
+  //permission levels
+  
+  public Integer permission(String title) throws IllegalArgumentException {
+    if (title.equals("member")) {
+      return 1;
+    }
+    
+    else if (title.equals("owner:)) {
+      return 2;
+    }                     
+                         
+    else if (title.equals("creator")) {
+      return 3;
+    }
+                          
+    else {
+      throw new IllegalArgumentException("not a valid user category");
+    }
+  }     
+                          
   public final Uuid id;
   public final Uuid owner;
   public final Time creation;
   public final String title;
+  public HashMap<Uuid, Integer> userCategory = newHashMap<Uuid, integer>();s
 
   public ConversationHeader(Uuid id, Uuid owner, Time creation, String title) {
 
