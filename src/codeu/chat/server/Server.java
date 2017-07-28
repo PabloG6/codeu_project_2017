@@ -45,6 +45,20 @@ public final class Server {
   private interface Command {
     void onMessage(InputStream in, OutputStream out) throws IOException;
   }
+  
+  final ConversationHeader conversation = ConversationHeader.SERIALIZER.read(in);
+  final User user = User.SERIALIZER.read(in);
+  final Collection<Uuid> ids = Serializers.collection(Uuid.SERIALIZER).read(in);
+  
+  if(model.validateAuthority(conversation, user.id, Controller.USER_TYPE_BANNED)) {
+    Serializers.INTEGER.write(out, NetworkCode.CONVERSATION_ACCESS_DENIED);
+  }
+ 
+  else {
+    final Collection<Message> messages = view.getMessages(conversation, user, ids);
+    Serializers.INTEGER.write(out, NetworkCode.GET_MESSAGES_BY_ID_RESPONSE);
+    Serializers.collection(Message.SERIALIZER).write(out, messages);
+  }
 
   private static final Logger.Log LOG = Logger.newLog(Server.class);
 
