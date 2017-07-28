@@ -116,18 +116,25 @@ final class View implements BasicView {
   }
 
   @Override
-  public Collection<Message> getMessages(Collection<Uuid> ids) {
+  public Collection<Message> getMessages(ConversationHeader conversation, User user, Collection<Uuid> ids) {
 
     final Collection<Message> messages = new ArrayList<>();
 
     try (final Connection connection = source.connect()) {
 
       Serializers.INTEGER.write(connection.out(), NetworkCode.GET_MESSAGES_BY_ID_REQUEST);
+      ConversationHeader.SERIALIZER.write(connection.out(), conversation);
+      User.SERIALIZER.write(connection.out(), user);
       Serializers.collection(Uuid.SERIALIZER).write(connection.out(), ids);
 
-      if (Serializers.INTEGER.read(connection.in()) == NetworkCode.GET_MESSAGES_BY_ID_RESPONSE) {
-        messages.addAll(Serializers.collection(Message.SERIALIZER).read(connection.in()));
-      } else {
+      final int access = Serializers.INTEGER.read(connection.in());
+      if (access == NetworkCode.GET_MESSAGES_BY_ID_RESPONSE) {
+	 messages.addAll(Serializers.collection(Message.SERIALIZER).read(connection.in()));
+      } 
+      else if (access == NetworkCode.CONVERSATION_ACCESS_DENIED) {
+	 System.out.println("Access denied.");
+      }
+      else {
         LOG.error("Response from server failed.");
       }
     } catch (Exception ex) {
