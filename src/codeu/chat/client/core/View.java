@@ -25,7 +25,6 @@ import codeu.chat.util.Time;
 import codeu.chat.util.Uuid;
 import codeu.chat.util.connections.Connection;
 import codeu.chat.util.connections.ConnectionSource;
-import sun.nio.ch.Net;
 
 // VIEW
 //
@@ -97,10 +96,11 @@ final class View implements BasicView {
         final Uuid version = Uuid.SERIALIZER.read(connection.in());
         return new ServerInfo(version);
       } else {
-        System.out.println("Oops, something wen't wrong. Please try again");
+        System.out.println("Expected SERVER_INFO_RESPONSE but didn't receive it.");
       }
     } catch (IOException e) {
-      System.out.println("Oops, something wen't wrong. Please try again");
+      System.out.println("ERROR: Exception during call on server. Check log for details.");
+      LOG.error("Response from server failed.");
       e.printStackTrace();
     }
 
