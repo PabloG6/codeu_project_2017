@@ -52,8 +52,8 @@ public final class Controller implements RawController, BasicController {
   }
 
   @Override
-  public ConversationHeader newConversation(String title, Uuid owner) {
-    return newConversation(createId(), title, owner, Time.now());
+  public ConversationHeader newConversation(String title, Uuid owner, int defaultPermission) {
+    return newConversation(createId(), owner, Time.now(), title, defaultPermission);
   }
 
   @Override
@@ -130,14 +130,14 @@ public final class Controller implements RawController, BasicController {
   }
 
   @Override
-  public ConversationHeader newConversation(Uuid id, String title, Uuid owner, Time creationTime) {
+  public ConversationHeader newConversation(Uuid id, Uuid owner, Time creationTime, String title, int defaultPermission) {
 
     final User foundOwner = model.userById().first(owner);
 
     ConversationHeader conversation = null;
 
     if (foundOwner != null && isIdFree(id)) {
-      conversation = new ConversationHeader(id, owner, creationTime, title);
+      conversation = new ConversationHeader(id, owner, creationTime, title, defaultPermission);
       model.add(foundOwner, conversation);
       LOG.info("Conversation added: " + id);
     }

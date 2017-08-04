@@ -195,7 +195,7 @@ public final class Server {
 
         final String title = Serializers.STRING.read(in);
         final Uuid owner = Uuid.SERIALIZER.read(in);
-        final ConversationHeader conversation = controller.newConversation(title, owner);
+        final ConversationHeader conversation = controller.newConversation(title, owner, 1);
 
         Serializers.INTEGER.write(out, NetworkCode.NEW_CONVERSATION_RESPONSE);
         Serializers.nullable(ConversationHeader.SERIALIZER).write(out, conversation);
@@ -332,10 +332,11 @@ public final class Server {
       // As the relay does not tell us who made the conversation - the first person who
       // has a message in the conversation will get ownership over this server's copy
       // of the conversation.
-      conversation = controller.newConversation(relayConversation.id(),
-                                                relayConversation.text(),
+      conversation = controller.newConversation(relayConversation.id(),                                         
                                                 user.id,
-                                                relayConversation.time());
+                                                relayConversation.time(),
+                                                relayConversation.text(),
+                                                1);
     }
 
     Message message = model.messageById().first(relayMessage.id());

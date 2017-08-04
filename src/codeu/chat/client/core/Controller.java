@@ -178,7 +178,7 @@ final class Controller implements BasicController {
   }
 
   @Override
-  public ConversationHeader newConversation(String title, Uuid owner)  {
+  public ConversationHeader newConversation(String title, Uuid owner, int defaultPermission)  {
 
     ConversationHeader response = null;
 
