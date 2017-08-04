@@ -15,6 +15,7 @@
 package codeu.chat.server;
 
 import java.util.Collection;
+import java.util.HashMap;
 
 import codeu.chat.common.BasicController;
 import codeu.chat.common.ConversationHeader;
@@ -26,6 +27,7 @@ import codeu.chat.common.User;
 import codeu.chat.util.Logger;
 import codeu.chat.util.Time;
 import codeu.chat.util.Uuid;
+import codeu.chat.util.store.Store;
 
 public final class Controller implements RawController, BasicController {
 
@@ -50,8 +52,8 @@ public final class Controller implements RawController, BasicController {
   }
 
   @Override
-  public ConversationHeader newConversation(String title, Uuid owner) {
-    return newConversation(createId(), title, owner, Time.now());
+  public ConversationHeader newConversation(String title, Uuid owner, int defaultPermission) {
+    return newConversation(createId(), owner, Time.now(), title, defaultPermission);
   }
 
   @Override
@@ -128,15 +130,15 @@ public final class Controller implements RawController, BasicController {
   }
 
   @Override
-  public ConversationHeader newConversation(Uuid id, String title, Uuid owner, Time creationTime) {
+  public ConversationHeader newConversation(Uuid id, Uuid owner, Time creationTime, String title, int defaultPermission) {
 
     final User foundOwner = model.userById().first(owner);
 
     ConversationHeader conversation = null;
 
     if (foundOwner != null && isIdFree(id)) {
-      conversation = new ConversationHeader(id, owner, creationTime, title);
-      model.add(conversation);
+      conversation = new ConversationHeader(id, owner, creationTime, title, defaultPermission);
+      model.add(foundOwner, conversation);
       LOG.info("Conversation added: " + id);
     }
 
@@ -167,5 +169,46 @@ public final class Controller implements RawController, BasicController {
   }
 
   private boolean isIdFree(Uuid id) { return !isIdInUse(id); }
+
+  private final HashMap<Uuid, HashMap<Uuid, Integer>> userConversationTracking = new HashMap<Uuid, HashMap<Uuid, Integer>>();
+  
+  public String newStatusUpdate(Uuid user) {
+    StringBuilder status = new StringBuilder();
+    HashMap<Uuid, Integer> userConversationSize = userConversationTracking.get(user);
+    for (Uuid conversation : userConversationSize.keySet()) {
+      ConversationHeader convo = model.conversationById().first(conversation);
+      String title = convo.title;
+      int newMessages = convo.size - userConversationSize.get(conversation);
+      String line = String.format("CONVERSATION %s: You have %d new messages!\n", title, newMessages);
+      status.append(line);
+      userConversationTracking.get(user).put(conversation, convo.size);
+    }
+    User userA = model.userById().first(user);
+    status.append(userA.statusUpdate());
+    return status.toString();
+  }
+
+  public void unfollowUser(User userA, User userB) {
+    User user1 = model.userById().first(userA.id);
+    User user2 = model.userById().first(userB.id);
+    User.unfollow(user1, user2);
+  }
+
+  public void followUser(User userA, User userB) {
+    User user1 = model.userById().first(userA.id);
+    User user2 = model.userById().first(userB.id);
+    User.follow(user1, user2);
+  }
+
+  public void unfollowConversation(Uuid user, Uuid conversation) {
+    userConversationTracking.get(user).remove(conversation);
+  }
+
+  public void followConversation(Uuid user, Uuid conversation) {
+    // Put into hashmap the conversation and what the size of the conversation
+    // is for the user at the time of following
+    ConversationHeader convo = model.conversationById().first(conversation);
+    userConversationTracking.get(user).put(conversation, convo.size);
+  }
 
 }

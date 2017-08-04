@@ -40,6 +40,6 @@ public interface RawController {
   //
   // Add a new conversation to the model with a specific if. If the id is
   // already in use, the call will fail and null will be returned.
-  ConversationHeader newConversation(Uuid id, String title, Uuid owner, Time creationTime);
+  ConversationHeader newConversation(Uuid id, Uuid owner, Time creationTime, String title, int defaultPermission);
 
 }
