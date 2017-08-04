@@ -16,7 +16,7 @@ public final class Tokenizer {
   public String next() throws IOException {
 	//skip all leading whitespace
 	while(remaining() > 0 && Character.isWhitespace(peek())) {
-	  read(); //ignore the result because we already know that it is a whitespace character
+	  read(); //result can be ignored because its definitely a whitespace character
 	}
 	if(remaining() <= 0) {
       return null;

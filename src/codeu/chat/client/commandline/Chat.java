@@ -28,6 +28,7 @@ import codeu.chat.client.core.MessageContext;
 import codeu.chat.client.core.UserContext;
 import codeu.chat.common.ServerInfo;
 import codeu.chat.util.Tokenizer;
+import codeu.chat.util.Time;
 
 public final class Chat {
 
@@ -39,9 +40,11 @@ public final class Chat {
   // panel to the top of the stack. When a command wants to go to the previous
   // panel all it needs to do is pop the top panel.
   private final Stack<Panel> panels = new Stack<>();
+  private final Context context;
 
   public Chat(Context context) {
     this.panels.push(createRootPanel(context));
+    this.context = context;
   }
 
   // HANDLE COMMAND
@@ -51,19 +54,18 @@ public final class Chat {
   // the system wants to exit, the function will return false.
   //
   public boolean handleCommand(String line) throws IOException {
+	  
+	  final List<String> args = new ArrayList<>();
+	  final Tokenizer tokenizer = new Tokenizer(line);
+	  for(String token = tokenizer.next(); token != null; token = tokenizer.next()) {
+	    args.add(token);
+	  }
+	  final String command = args.get(0);
+	  args.remove(0);
 
-    final List<String> args = new ArrayList<>();
-    final Tokenizer tokenizer = new Tokenizer(line);
-    for(String token = tokenizer.next(); token != null; token = tokenizer.next()) {
-      args.add(token);
-    }
-    final String command = args.get(0);
-    args.remove(0);
-
-    // Because "exit" and "back" are applicable to every panel, handle
+    // Because "exit", "back", and "version" are applicable to every panel, handle
     // those commands here to avoid having to implement them for each
     // panel.
-
     if ("exit".equals(command)) {
       // The user does not want to process any more commands
       return false;
@@ -79,6 +81,7 @@ public final class Chat {
       // the command was handled
       return true;
     }
+
 
     // If we get to here it means that the command was not correctly handled
     // so we should let the user know. Still return true as we want to continue
@@ -98,11 +101,11 @@ public final class Chat {
   // will be user selection focused.
   //
   private Panel createRootPanel(final Context context) {
-	    
+
     final Panel panel = new Panel();
-    
-	// command that uses getInfo() context
-	panel.register("info", new Panel.Command() {
+   
+  	// command that uses getInfo() context
+	  panel.register("info", new Panel.Command() {
 	  @Override
 	  public void invoke(List<String> args) {
 	    final ServerInfo info = context.getInfo();
@@ -130,6 +133,10 @@ public final class Chat {
         System.out.println("    Add a new user with the given name.");
         System.out.println("  u-sign-in <name>");
         System.out.println("    Sign in as the user with the given name.");
+        System.out.println("  uptime");
+        System.out.println("    Display how long server has been running.");
+        System.out.println("  version");
+        System.out.println("    Display server version number.");
         System.out.println("  exit");
         System.out.println("    Exit the program.");
       }
@@ -228,14 +235,30 @@ public final class Chat {
         System.out.println("    Add a new conversation with the given title and join it as the current user.");
         System.out.println("  c-join <title>");
         System.out.println("    Join the conversation as the current user.");
+        System.out.println("  u-follow <name>");
+        System.out.println("    Follow a user to get updates on new user activity.");
+        System.out.println("  u-unfollow <name>");
+        System.out.println("    Unfollow a user to stop updates from user activity.");
+        System.out.println("  c-follow <title>");
+        System.out.println("    Follow a conversation to get updates on new messages.");
+        System.out.println("  c-unfollow <title>");
+        System.out.println("    Unfollow a conversation to stop updates from conversation.");
+        System.out.println("  status-update");
+        System.out.println("    Retrieve updates on users and conversations current user is following.");
         System.out.println("  info");
-        System.out.println("    Display all info for the current user");
+        System.out.println("    Display all info for the current user.");
+        System.out.println("  uptime");
+        System.out.println("    Display how long server has been running.");
+        System.out.println("  version");
+        System.out.println("    Display server version number.");
         System.out.println("  back");
         System.out.println("    Go back to ROOT MODE.");
         System.out.println("  exit");
         System.out.println("    Exit the program.");
       }
     });
+
+
 
     // C-LIST (list conversations)
     //
@@ -263,7 +286,7 @@ public final class Chat {
       @Override
       public void invoke(List<String> args) {
     	final String name = args.isEmpty() ? "" : args.get(0).trim();
-        if (name.length() > 0) {
+    	if (name.length() > 0) {
           final ConversationContext conversation = user.start(name);
           if (conversation == null) {
             System.out.println("ERROR: Failed to create new conversation");
@@ -273,6 +296,149 @@ public final class Chat {
         } else {
           System.out.println("ERROR: Missing <title>");
         }
+      }
+    });
+
+    // STATUS-UPDATE (status update)
+    //
+    // Add a command that will give users information on items they are following
+    //
+    panel.register("status-update", new Panel.Command() {
+      @Override
+      public void invoke(List<String> args) {
+        System.out.print("Status Updates!\n" + user.statusUpdate());
+      }
+    });
+
+    // U-FOLLOW (follow user)
+    //
+    // Add a command that will follow user activity when the user enters
+    // "u-follow" while on the user panel.
+    //
+    panel.register("u-follow", new Panel.Command() {
+      @Override
+      public void invoke(List<String> args) {
+    	final String name = args.isEmpty() ? "" : args.get(0).trim();
+      	if (name.length() > 0) {
+          final UserContext userB = findUser(name);
+          if (user == null) {
+            System.out.format("ERROR: Failed to sign in as '%s'\n", name);
+          } else {
+            user.followUser(userB.user);
+          }
+        } else {
+          System.out.println("ERROR: Missing <username>");
+        }
+      }
+
+      // Find the first user with the given name and return a user context
+      // for that user. If no user is found, the function will return null.
+      private UserContext findUser(String name) {
+        for (final UserContext user : context.allUsers()) {
+          if (user.user.name.equals(name)) {
+            return user;
+          }
+        }
+        return null;
+      }
+    });
+
+    // U-UNFOLLOW (follow user)
+    //
+    // Add a command that will unfollow user activity when the user enters
+    // "u-unfollow" while on the user panel.
+    //
+    panel.register("u-unfollow", new Panel.Command() {
+      @Override
+      public void invoke(List<String> args) {
+    	  final String name = args.isEmpty() ? "" : args.get(0).trim();
+        if (name.length() > 0) {
+          final UserContext userB = findUser(name);
+          if (user == null) {
+            System.out.format("ERROR: Failed to sign in as '%s'\n", name);
+          } else {
+            user.unfollowUser(userB.user);
+          }
+        } else {
+          System.out.println("ERROR: Missing <username>");
+        }
+      }
+
+      // Find the first user with the given name and return a user context
+      // for that user. If no user is found, the function will return null.
+      private UserContext findUser(String name) {
+        for (final UserContext user : context.allUsers()) {
+          if (user.user.name.equals(name)) {
+            return user;
+          }
+        }
+        return null;
+      }
+    });
+
+    // C-UNFOLLOW (unfollow conversation)
+    //
+    // Add a command that will unfollow a conversation when the user enters
+    // "c-unfollow" while on the user panel.
+    //
+    panel.register("c-unfollow", new Panel.Command() {
+      @Override
+      public void invoke(List<String> args) {
+    	final String name = args.isEmpty() ? "" : args.get(0).trim();
+        if (name.length() > 0) {
+          final ConversationContext conversation = find(name);
+          if (conversation == null) {
+            System.out.format("ERROR: No conversation with name '%s'\n", name);
+          } else {
+            user.unfollowConversation(conversation.conversation.id);
+          }
+        } else {
+          System.out.println("ERROR: Missing <title>");
+        }
+      }
+
+      // Find the first conversation with the given name and return its context.
+      // If no conversation has the given name, this will return null.
+      private ConversationContext find(String title) {
+        for (final ConversationContext conversation : user.conversations()) {
+          if (title.equals(conversation.conversation.title)) {
+            return conversation;
+          }
+        }
+        return null;
+      }
+    });
+
+    // C-FOLLOW (follow conversation)
+    //
+    // Add a command that will follow a conversation when the user enters
+    // "c-follow" while on the user panel.
+    //
+    panel.register("c-follow", new Panel.Command() {
+      @Override
+      public void invoke(List<String> args) {
+    	final String name = args.isEmpty() ? "" : args.get(0).trim();
+        if (name.length() > 0) {
+          final ConversationContext conversation = find(name);
+          if (conversation == null) {
+            System.out.format("ERROR: No conversation with name '%s'\n", name);
+          } else {
+            user.followConversation(conversation.conversation.id);
+          }
+        } else {
+          System.out.println("ERROR: Missing <title>");
+        }
+      }
+
+      // Find the first conversation with the given name and return its context.
+      // If no conversation has the given name, this will return null.
+      private ConversationContext find(String title) {
+        for (final ConversationContext conversation : user.conversations()) {
+          if (title.equals(conversation.conversation.title)) {
+            return conversation;
+          }
+        }
+        return null;
       }
     });
 
@@ -347,6 +513,10 @@ public final class Chat {
         System.out.println("    Add a new message to the current conversation as the current user.");
         System.out.println("  info");
         System.out.println("    Display all info about the current conversation.");
+        System.out.println("  uptime");
+        System.out.println("    Display how long server has been running.");
+        System.out.println("  version");
+        System.out.println("    Display server version number.");
         System.out.println("  back");
         System.out.println("    Go back to USER MODE.");
         System.out.println("  exit");
@@ -386,7 +556,7 @@ public final class Chat {
       @Override
       public void invoke(List<String> args) {
     	final String message = args.isEmpty() ? "" : args.get(0).trim();
-        if (message.length() > 0) {
+    	if (message.length() > 0) {
           conversation.add(message);
         } else {
           System.out.println("ERROR: Messages must contain text");

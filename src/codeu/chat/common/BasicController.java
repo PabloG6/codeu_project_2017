@@ -15,6 +15,7 @@
 package codeu.chat.common;
 
 import codeu.chat.util.Uuid;
+import codeu.chat.common.User;
 
 // BASIC CONTROLLER
 //
@@ -50,5 +51,20 @@ public interface BasicController {
   //  representing the full state of the conversation on the server.
   //  Whether conversations can have the same title is undefined.
   ConversationHeader newConversation(String title, Uuid owner, int defaultPermission);
+
+  // FOLLOW USER
+  void followUser(User userA, User userB);
+  
+  // UNFOLLOW USER
+  void unfollowUser(User userA, User userB);
+  
+  // NEW STATUS UPDATED
+  String newStatusUpdate(Uuid user);
+  
+  // FOLLOW CONVERSATION
+  void followConversation(Uuid user, Uuid conversation);
+  
+  // UNFOLLOW CONVERSATION
+  void unfollowConversation(Uuid user, Uuid conversation);
 
 }

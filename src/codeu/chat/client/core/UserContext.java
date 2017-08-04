@@ -35,6 +35,27 @@ public final class UserContext {
     this.controller = controller;
   }
 
+  public String statusUpdate() {
+    return controller.newStatusUpdate(user.id);
+  }
+
+  public void followUser(User userB) {
+    controller.followUser(user, userB);
+  }
+
+  public void unfollowUser(User userB) {
+    controller.unfollowUser(user, userB);
+  }
+
+  public void unfollowConversation(Uuid conversation) {
+    controller.unfollowConversation(user.id, conversation);
+  }
+
+  public void followConversation(Uuid conversation) {
+    controller.followConversation(user.id, conversation);
+  }
+
+  
   public ConversationContext start(String name) {
     final ConversationHeader conversation = controller.newConversation(name, user.id, 1);
     return conversation == null ?
