@@ -49,6 +49,6 @@ public interface BasicController {
   //  operation is successful, a Conversation object will be returned
   //  representing the full state of the conversation on the server.
   //  Whether conversations can have the same title is undefined.
-  ConversationHeader newConversation(String title, Uuid owner, Integer defaultByte);
+  ConversationHeader newConversation(String title, Uuid owner, int defaultPermission);
 
 }

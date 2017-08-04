@@ -35,7 +35,7 @@ public final class ConversationHeader {
       Uuid.SERIALIZER.write(out, value.owner);
       Time.SERIALIZER.write(out, value.creation);
       Serializers.STRING.write(out, value.title);
-      Serializers.INTEGER.write(out, value.defaultByte);
+      Serializers.INTEGER.write(out, value.defaultPermission);
 
     }
 
@@ -52,54 +52,40 @@ public final class ConversationHeader {
 
     }
   };
-
-  // permission levels
-  // member == 1
-  // owner == 2
-  // creator == 3
-  
-  public enum permissions {
-    member(1), owner(2), creator(3);
-	private int permissionLevel;
-	
-	private permissions(int permissionLevel) {
-	  this.permissionLevel = permissionLevel;
-	}
-	
-	public int getPermissionLevel() {
-	  return permissionLevel;
-	}
-  }
  
   public final Uuid id;
   public final Uuid owner;
   public final Time creation;
   public final String title;
-  public final Integer defaultByte;
+  public final Integer defaultPermission;
   public final HashMap<Uuid, Integer> userLevels;
 
-  public ConversationHeader(Uuid id, Uuid owner, Time creation, String title, Integer defaultByte) {
+  public ConversationHeader(Uuid id, Uuid owner, Time creation, String title, int defaultPermission) {
 
     this.id = id;
     this.owner = owner;
     this.creation = creation;
     this.title = title;
-    this.defaultByte = defaultByte;
+    this.defaultPermission = defaultPermission;
     this.userLevels = new HashMap<Uuid, Integer>();
 
     // set creator bit
     
-    permissions creatorLevel = permissions.creator; 
-    userLevels.put(owner, creatorLevel.getPermissionLevel());
+    userLevels.put(owner, 3);
   }
   
   // set default level of a user
   
   public void setDefault(Uuid user) {
 	if(userLevels.get(user) == null) {
-	  userLevels.put(user, defaultByte);
+	  userLevels.put(user, defaultPermission);
 	}
   }
+  
+  // permission levels
+  // member == 1
+  // owner == 2
+  // creator == 3
   
   // check the permission level of a user
 
@@ -109,7 +95,7 @@ public final class ConversationHeader {
 	if(userLevels.get(user) != null) {
 	  return userLevels.get(user) >= 1;
 	}
-	return defaultByte >= 1;
+	return defaultPermission >= 1;
   }
 
   // check if user is owner
@@ -118,7 +104,7 @@ public final class ConversationHeader {
 	if(userLevels.get(user) != null) {
 	  return userLevels.get(user) >= 2;
 	}
-	return defaultByte >= 2;
+	return defaultPermission >= 2;
   }
 
   // check if user is creator
@@ -127,7 +113,7 @@ public final class ConversationHeader {
 	if(userLevels.get(user) != null) {
 	  return userLevels.get(user) == 3;
 	}
-	return defaultByte == 3;
+	return defaultPermission == 3;
   }
 
 }
