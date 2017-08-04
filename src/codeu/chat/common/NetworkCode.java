@@ -50,4 +50,5 @@ public final class NetworkCode {
       NEW_UNFOLLOW_USER_RESPONSE = 42,
       NEW_STATUS_UPDATE_REQUEST = 43,
       NEW_STATUS_UPDATE_RESPONSE = 44;
+
 }

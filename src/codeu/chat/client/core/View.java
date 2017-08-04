@@ -14,9 +14,11 @@
 
 package codeu.chat.client.core;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import codeu.chat.common.*;
 import codeu.chat.common.BasicView;
 import codeu.chat.common.ConversationHeader;
 import codeu.chat.common.ConversationPayload;
@@ -91,6 +93,26 @@ final class View implements BasicView {
 
     return summaries;
   }
+
+  @Override
+  public ServerInfo getServerInfo() {
+    try {
+      final Connection connection = this.source.connect();
+      Serializers.INTEGER.write(connection.out(), NetworkCode.SERVER_INFO_REQUEST);
+      if(Serializers.INTEGER.read(connection.in()) == NetworkCode.SERVER_INFO_RESPONSE) {
+        final Uuid version = Uuid.SERIALIZER.read(connection.in());
+        return new ServerInfo(version);
+      } else {
+        System.out.println("Expected SERVER_INFO_RESPONSE but didn't receive it.");
+      }
+    } catch (IOException e) {
+      System.out.println("ERROR: Exception during call on server. Check log for details.");
+      e.printStackTrace();
+    }
+
+    return null;
+  }
+
 
   @Override
   public Collection<ConversationPayload> getConversationPayloads(Collection<Uuid> ids) {
