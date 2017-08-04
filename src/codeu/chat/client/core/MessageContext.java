@@ -20,15 +20,21 @@ import java.util.Iterator;
 import codeu.chat.common.BasicView;
 import codeu.chat.common.Message;
 import codeu.chat.util.Uuid;
+import codeu.chat.common.ConversationHeader;
+import codeuchat.common.User;
 
 public final class MessageContext {
 
   public final Message message;
   private final BasicView view;
-
-  public MessageContext(Message message, BasicView view) {
+  private final ConversationHeader conversation;
+  private final User user;
+  
+  public MessageContext(Message message, BasicView view, ConversationHeader conversation, User user) {
     this.message = message;
     this.view = view;
+    this.conversation = conversation;
+    this.user = user;
   }
 
   public MessageContext next() {
