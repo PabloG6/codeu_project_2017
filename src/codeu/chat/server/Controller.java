@@ -28,6 +28,7 @@ import codeu.chat.util.Logger;
 import codeu.chat.util.Time;
 import codeu.chat.util.Uuid;
 import codeu.chat.util.store.Store;
+import codeu.chat.server.LocalFile;
 
 public final class Controller implements RawController, BasicController {
 
@@ -35,10 +36,37 @@ public final class Controller implements RawController, BasicController {
 
   private final Model model;
   private final Uuid.Generator uuidGenerator;
+  private final LocalFile localFile;
+  
+  private boolean isInitialized = false;
 
   public Controller(Uuid serverId, Model model) {
     this.model = model;
     this.uuidGenerator = new RandomUuidGenerator(serverId, System.currentTimeMillis());
+    this.localFile = null;
+  }
+  
+  // Constructor to get local file information
+  public Controller(Uuid serverId, Model model, LocalFile localFile) {
+    this.model = model;		
+    this.uuidGenerator = new RandomUuidGenerator(serverId, System.currentTimeMillis());		
+     		
+    this.localFile = localFile;//The path is assigned by server.		
+    //Load the data from local file		
+    for (User item : localFile.getCopyOfUsers())		
+    {		
+      this.newUser(item.id, item.name, item.creation);		
+    }		
+      for (ConversationHeader item : localFile.getCopyOfConversationHeaders())		
+    {		
+      this.newConversation(item.id, item.title, item.owner, item.creation);		
+    }		
+    for(Message item :localFile.getCopyOfMessages())		
+    {		
+      this.newMessage(item.id, item.author, item.conversation, item.content, item.creation);		
+    }		
+    //End of initialization		
+    isInitialized = true;		
   }
 
   @Override
@@ -76,10 +104,24 @@ public final class Controller implements RawController, BasicController {
 
     if (foundUser != null && foundConversation != null && isIdFree(id)) {
 
-      message = new Message(id, Uuid.NULL, Uuid.NULL, creationTime, author, body);
+      message = new Message(id, Uuid.NULL, Uuid.NULL, creationTime, author, body, conversation);
       model.add(message);
       LOG.info("Message added: %s", message.id);
 
+      if(localFile != null && isInitialized)		
+      {		
+        localFile.addMessage(message);		
+      }		
+      if(isInitialized)		
+      {		
+         LOG.info("Message added: %s", message.id);		
+      }		
+      else		
+      {		
+        //During initialization, messages should be read from the local file		
+        LOG.info("Message read from local file: %s", message.id);		
+      }
+      
       // Find and update the previous "last" message so that it's "next" value
       // will point to the new message.
 
@@ -129,6 +171,28 @@ public final class Controller implements RawController, BasicController {
           id,
           name,
           creationTime);
+      
+      if(localFile != null && isInitialized)		
+      {		
+        localFile.addUser(user);		
+      }		
+      if(isInitialized)		
+      {		
+        LOG.info(		
+            "newUser success (user.id=%s user.name=%s user.time=%s)",		
+            id,		
+            name,		
+            creationTime);		
+      }		
+      else		
+      {		
+        //If it is initializing, users should be read from local file not added a new record.		
+        LOG.info(		
+            "User is read from local file successfully. (user.id=%s user.name=%s user.time=%s)",		
+            id,		
+            name,		
+            creationTime);		
+      }
 
     } else {
 
@@ -153,6 +217,17 @@ public final class Controller implements RawController, BasicController {
       conversation = new ConversationHeader(id, owner, creationTime, title, defaultPermission);
       model.add(foundOwner, conversation);
       LOG.info("Conversation added: " + id);
+      if(localFile != null) {		
+         localFile.addConversationHeader(conversation);		
+       }		
+       if(isInitialized)		
+       {		
+         LOG.info("Conversation added: " + id);		
+       }		
+       else		
+       {		
+         LOG.info("Conversation read from local file", id);		
+       }
     }
 
     return conversation;

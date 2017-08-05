@@ -15,6 +15,7 @@
 
 package codeu.chat.server;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -26,6 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import codeu.chat.common.*;
+import codeu.chat.storage.Storage;
 import codeu.chat.util.Logger;
 import codeu.chat.util.Serializers;
 import codeu.chat.util.Time;
@@ -40,6 +42,8 @@ public final class Server {
   }
 
   private static final Logger.Log LOG = Logger.newLog(Server.class);
+  
+  Storage storage = new Storage();
 
   private static final int RELAY_REFRESH_MS = 5000;  // 5 seconds
 
@@ -160,6 +164,8 @@ public final class Server {
 
         Serializers.INTEGER.write(out, NetworkCode.NEW_MESSAGE_RESPONSE);
         Serializers.nullable(Message.SERIALIZER).write(out, message);
+        
+        storage.write(message);
 
         timeline.scheduleNow(createSendToRelayEvent(
             author,

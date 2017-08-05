@@ -17,6 +17,7 @@ package codeu.chat.common;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Serializable;
 
 import codeu.chat.util.Serializer;
 import codeu.chat.util.Serializers;
@@ -25,8 +26,10 @@ import codeu.chat.util.Uuid;
 
 import java.util.ArrayList;
 
-public final class User {
-
+public final class User implements Serializable {
+  
+  private static final long serialVersionUID = 1L;
+  
   public static final Serializer<User> SERIALIZER = new Serializer<User>() {
 
     @Override

@@ -23,6 +23,7 @@ import codeu.chat.common.Secret;
 import codeu.chat.server.NoOpRelay;
 import codeu.chat.server.RemoteRelay;
 import codeu.chat.server.Server;
+import codeu.chat.storage.Storage;
 import codeu.chat.util.Logger;
 import codeu.chat.util.RemoteAddress;
 import codeu.chat.util.Uuid;
@@ -34,7 +35,6 @@ import codeu.chat.util.connections.ServerConnectionSource;
 final class ServerMain {
 
   private static final Logger.Log LOG = Logger.newLog(ServerMain.class);
-
   public static void main(String[] args) {
 
     Logger.enableConsoleOutput();
@@ -77,7 +77,7 @@ final class ServerMain {
     ) {
 
       LOG.info("Starting server...");
-      runServer(id, secret, serverSource, relaySource);
+      runServer(id, secret, serverSource, relaySource, persistentPath);
 
     } catch (IOException ex) {
 
@@ -89,7 +89,8 @@ final class ServerMain {
   private static void runServer(Uuid id,
                                 Secret secret,
                                 ConnectionSource serverSource,
-                                ConnectionSource relaySource) {
+                                ConnectionSource relaySource,
+                                File localFilePath) {
 
     final Relay relay = relaySource == null ?
                         new NoOpRelay() :

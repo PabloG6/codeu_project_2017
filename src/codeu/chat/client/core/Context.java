@@ -21,6 +21,7 @@ import java.util.Collection;
 import codeu.chat.common.BasicView;
 import codeu.chat.common.ServerInfo;
 import codeu.chat.common.User;
+import codeu.chat.common.ServerInfo;
 import codeu.chat.util.Uuid;
 import codeu.chat.util.connections.ConnectionSource;
 
@@ -33,7 +34,9 @@ public final class Context {
     this.view = new View(source);
     this.controller = new Controller(source);
   }
-
+  public ServerInfo getServerInfo() {
+    return view.getServerInfo();
+  }
   public UserContext create(String name) {
     final User user = controller.newUser(name);
     return user == null ?
