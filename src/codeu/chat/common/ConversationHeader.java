@@ -60,7 +60,7 @@ public final class ConversationHeader {
       return 1;
     }
     
-    else if (title.equals("owner:)) {
+    else if (title.equals("owner")) {
       return 2;
     }                     
                          
@@ -77,7 +77,7 @@ public final class ConversationHeader {
   public final Uuid owner;
   public final Time creation;
   public final String title;
-  public HashMap<Uuid, Integer> userCategory = newHashMap<Uuid, integer>();
+  public HashMap<Uuid, Integer> userCategory = newHashMap<Uuid, Integer>();
 
   public ConversationHeader(Uuid id, Uuid owner, Time creation, String title) {
 
