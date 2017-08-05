@@ -211,11 +211,25 @@ public final class Controller implements RawController, BasicController {
     userConversationTracking.get(user).put(conversation, convo.size);
   }
   
-  //change user's status for a conversation (member/owner/creator)
-  public void changePermission(Uuid user, Uuid conversation, int newPermission) {
+  //change user's status for a conversation to not member
+  public void revokeMember(Uuid user, Uuid conversation) {
 	ConversationHeader convo = model.conversationById().first(conversation);
 	convo.userLevels.remove(user);
-	convo.userLevels.put(user, newPermission); 
+	convo.userLevels.put(user, 0); 
+  }
+  
+  //change user's status for a conversation to member
+  public void setMember(Uuid user, Uuid conversation) {
+	ConversationHeader convo = model.conversationById().first(conversation);
+	convo.userLevels.remove(user);
+	convo.userLevels.put(user, 1); 
+  }
+  
+  //change user's status for a conversation to owner
+  public void setOwner(Uuid user, Uuid conversation) {
+	ConversationHeader convo = model.conversationById().first(conversation);
+	convo.userLevels.remove(user);
+	convo.userLevels.put(user, 2); 
   }
 
 }

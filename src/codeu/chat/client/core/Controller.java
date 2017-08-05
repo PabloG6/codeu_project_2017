@@ -202,18 +202,55 @@ final class Controller implements BasicController {
     return response;
   }
   
-  //change user's status for a conversation (member/owner/creator)
+  //change user's status for a conversation to not member
   @Override
-  public void changePermission(Uuid user, Uuid conversation, int newPermission)  {
+  public void revokeMember(Uuid user, Uuid conversation)  {
 
     try (final Connection connection = source.connect()) {
 
-      Serializers.INTEGER.write(connection.out(), NetworkCode.CHANGE_PERMISSION_REQUEST);
+      Serializers.INTEGER.write(connection.out(), NetworkCode.REVOKE_MEMBER_REQUEST);
       Uuid.SERIALIZER.write(connection.out(), user);
       Uuid.SERIALIZER.write(connection.out(), conversation);
-      Serializers.INTEGER.write(connection.out(), newPermission);
 
-      if (!(Serializers.INTEGER.read(connection.in()) == NetworkCode.CHANGE_PERMISSION_RESPONSE)) {
+      if (!(Serializers.INTEGER.read(connection.in()) == NetworkCode.REVOKE_MEMBER_RESPONSE)) {
+    	LOG.error("Response from server failed.");
+      }
+    } catch (Exception ex) {
+      System.out.println("ERROR: Exception during call on server. Check log for details.");
+      LOG.error(ex, "Exception during call on server.");
+    }
+  }
+  
+  //change user's status for a conversation to member
+  @Override
+  public void setMember(Uuid user, Uuid conversation)  {
+
+    try (final Connection connection = source.connect()) {
+
+      Serializers.INTEGER.write(connection.out(), NetworkCode.SET_MEMBER_REQUEST);
+      Uuid.SERIALIZER.write(connection.out(), user);
+      Uuid.SERIALIZER.write(connection.out(), conversation);
+
+      if (!(Serializers.INTEGER.read(connection.in()) == NetworkCode.SET_MEMBER_RESPONSE)) {
+    	LOG.error("Response from server failed.");
+      }
+    } catch (Exception ex) {
+      System.out.println("ERROR: Exception during call on server. Check log for details.");
+      LOG.error(ex, "Exception during call on server.");
+    }
+  }
+  
+  //change user's status for a conversation to owner
+  @Override
+  public void setOwner(Uuid user, Uuid conversation)  {
+
+    try (final Connection connection = source.connect()) {
+
+      Serializers.INTEGER.write(connection.out(), NetworkCode.SET_OWNER_REQUEST);
+      Uuid.SERIALIZER.write(connection.out(), user);
+      Uuid.SERIALIZER.write(connection.out(), conversation);
+
+      if (!(Serializers.INTEGER.read(connection.in()) == NetworkCode.SET_OWNER_RESPONSE)) {
     	LOG.error("Response from server failed.");
       }
     } catch (Exception ex) {
