@@ -15,6 +15,7 @@
 package codeu.chat.server;
 
 import java.util.Collection;
+import java.util.HashMap;
 
 import codeu.chat.common.BasicController;
 import codeu.chat.common.ConversationHeader;
@@ -26,6 +27,7 @@ import codeu.chat.common.User;
 import codeu.chat.util.Logger;
 import codeu.chat.util.Time;
 import codeu.chat.util.Uuid;
+import codeu.chat.util.store.Store;
 import codeu.chat.server.LocalFile;
 
 public final class Controller implements RawController, BasicController {
@@ -35,7 +37,7 @@ public final class Controller implements RawController, BasicController {
   private final Model model;
   private final Uuid.Generator uuidGenerator;
   private final LocalFile localFile;
-
+  
   private boolean isInitialized = false;
 
   public Controller(Uuid serverId, Model model) {
@@ -44,33 +46,38 @@ public final class Controller implements RawController, BasicController {
     this.localFile = null;
   }
   
-  //Constructor to get local file information
-  public Controller(Uuid serverId, Model model,LocalFile localFile) {
-    this.model = model;
-    this.uuidGenerator = new RandomUuidGenerator(serverId, System.currentTimeMillis());
-     
-    this.localFile = localFile;//The path is assigned by server.
-    //Load the data from local file
-    for (User item : localFile.getCopyOfUsers())
-    {
-      this.newUser(item.id, item.name, item.creation);
-    }
-      for (ConversationHeader item : localFile.getCopyOfConversationHeaders())
-    {
-      this.newConversation(item.id, item.title, item.owner, item.creation);
-    }
-
-    for(Message item :localFile.getCopyOfMessages())
-    {
-      this.newMessage(item.id, item.author, item.conversation, item.content, item.creation);
-    }
-    //End of initialization
-    isInitialized = true;
-}
+  // Constructor to get local file information
+  public Controller(Uuid serverId, Model model, LocalFile localFile) {
+    this.model = model;		
+    this.uuidGenerator = new RandomUuidGenerator(serverId, System.currentTimeMillis());		
+     		
+    this.localFile = localFile;//The path is assigned by server.		
+    //Load the data from local file		
+    for (User item : localFile.getCopyOfUsers())		
+    {		
+      this.newUser(item.id, item.name, item.creation);		
+    }		
+      for (ConversationHeader item : localFile.getCopyOfConversationHeaders())		
+    {		
+      this.newConversation(item.id, item.title, item.owner, item.creation);		
+    }		
+    for(Message item :localFile.getCopyOfMessages())		
+    {		
+      this.newMessage(item.id, item.author, item.conversation, item.content, item.creation);		
+    }		
+    //End of initialization		
+    isInitialized = true;		
+  }
 
   @Override
   public Message newMessage(Uuid author, Uuid conversation, String body) {
-    return newMessage(createId(), author, conversation, body, Time.now());
+	ConversationHeader convo = model.conversationById().first(conversation);
+	if(convo.isMember(author)) {
+      return newMessage(createId(), author, conversation, body, Time.now());
+	} else {
+	  System.out.println("Access denied: must be member to add message.");
+	  return null;
+	}
   }
 
   @Override
@@ -79,8 +86,8 @@ public final class Controller implements RawController, BasicController {
   }
 
   @Override
-  public ConversationHeader newConversation(String title, Uuid owner) {
-    return newConversation(createId(), title, owner, Time.now());
+  public ConversationHeader newConversation(String title, Uuid owner, int defaultPermission) {
+    return newConversation(createId(), owner, Time.now(), title, defaultPermission);
   }
 
   @Override
@@ -88,29 +95,33 @@ public final class Controller implements RawController, BasicController {
 
     final User foundUser = model.userById().first(author);
     final ConversationPayload foundConversation = model.conversationPayloadById().first(conversation);
-
+    
     Message message = null;
+    
+    ConversationHeader convo = model.conversationById().first(conversation);    
+    
+    if(convo.isMember(author)) { 
 
     if (foundUser != null && foundConversation != null && isIdFree(id)) {
 
       message = new Message(id, Uuid.NULL, Uuid.NULL, creationTime, author, body, conversation);
       model.add(message);
       LOG.info("Message added: %s", message.id);
-      
-      if(localFile != null && isInitialized)
-      {
-        localFile.addMessage(message);
-      }
-      if(isInitialized)
-      {
-         LOG.info("Message added: %s", message.id);
-      }
-      else
-      {
-        //During initialization, messages should be read from the local file
-        LOG.info("Message read from local file: %s", message.id);
-      }
 
+      if(localFile != null && isInitialized)		
+      {		
+        localFile.addMessage(message);		
+      }		
+      if(isInitialized)		
+      {		
+         LOG.info("Message added: %s", message.id);		
+      }		
+      else		
+      {		
+        //During initialization, messages should be read from the local file		
+        LOG.info("Message read from local file: %s", message.id);		
+      }
+      
       // Find and update the previous "last" message so that it's "next" value
       // will point to the new message.
 
@@ -138,6 +149,9 @@ public final class Controller implements RawController, BasicController {
 
       foundConversation.lastMessage = message.id;
     }
+    } else {
+      System.out.println("Access denied: must be member to add message.");
+    }
 
     return message;
   }
@@ -158,26 +172,26 @@ public final class Controller implements RawController, BasicController {
           name,
           creationTime);
       
-      if(localFile != null && isInitialized)
-      {
-        localFile.addUser(user);
-      }
-      if(isInitialized)
-      {
-        LOG.info(
-            "newUser success (user.id=%s user.name=%s user.time=%s)",
-            id,
-            name,
-            creationTime);
-      }
-      else
-      {
-        //If it is initializing, users should be read from local file not added a new record.
-        LOG.info(
-            "User is read from local file successfully. (user.id=%s user.name=%s user.time=%s)",
-            id,
-            name,
-            creationTime);
+      if(localFile != null && isInitialized)		
+      {		
+        localFile.addUser(user);		
+      }		
+      if(isInitialized)		
+      {		
+        LOG.info(		
+            "newUser success (user.id=%s user.name=%s user.time=%s)",		
+            id,		
+            name,		
+            creationTime);		
+      }		
+      else		
+      {		
+        //If it is initializing, users should be read from local file not added a new record.		
+        LOG.info(		
+            "User is read from local file successfully. (user.id=%s user.name=%s user.time=%s)",		
+            id,		
+            name,		
+            creationTime);		
       }
 
     } else {
@@ -193,26 +207,26 @@ public final class Controller implements RawController, BasicController {
   }
 
   @Override
-  public ConversationHeader newConversation(Uuid id, String title, Uuid owner, Time creationTime) {
+  public ConversationHeader newConversation(Uuid id, Uuid owner, Time creationTime, String title, int defaultPermission) {
 
     final User foundOwner = model.userById().first(owner);
 
     ConversationHeader conversation = null;
 
     if (foundOwner != null && isIdFree(id)) {
-      conversation = new ConversationHeader(id, owner, creationTime, title);
-      model.add(conversation);
+      conversation = new ConversationHeader(id, owner, creationTime, title, defaultPermission);
+      model.add(foundOwner, conversation);
       LOG.info("Conversation added: " + id);
-      if(localFile != null) {
-         localFile.addConversationHeader(conversation);
-       }
-       if(isInitialized)
-       {
-         LOG.info("Conversation added: " + id);
-       }
-       else
-       {
-         LOG.info("Conversation read from local file", id);
+      if(localFile != null) {		
+         localFile.addConversationHeader(conversation);		
+       }		
+       if(isInitialized)		
+       {		
+         LOG.info("Conversation added: " + id);		
+       }		
+       else		
+       {		
+         LOG.info("Conversation read from local file", id);		
        }
     }
 
@@ -243,5 +257,85 @@ public final class Controller implements RawController, BasicController {
   }
 
   private boolean isIdFree(Uuid id) { return !isIdInUse(id); }
+
+  private final HashMap<Uuid, HashMap<Uuid, Integer>> userConversationTracking = new HashMap<Uuid, HashMap<Uuid, Integer>>();
+  
+  public String newStatusUpdate(Uuid user) {
+    StringBuilder status = new StringBuilder();
+    HashMap<Uuid, Integer> userConversationSize = userConversationTracking.get(user);
+    for (Uuid conversation : userConversationSize.keySet()) {
+      ConversationHeader convo = model.conversationById().first(conversation);
+      String title = convo.title;
+      int newMessages = convo.size - userConversationSize.get(conversation);
+      String line = String.format("CONVERSATION %s: You have %d new messages!\n", title, newMessages);
+      status.append(line);
+      userConversationTracking.get(user).put(conversation, convo.size);
+    }
+    User userA = model.userById().first(user);
+    status.append(userA.statusUpdate());
+    return status.toString();
+  }
+
+  public void unfollowUser(User userA, User userB) {
+    User user1 = model.userById().first(userA.id);
+    User user2 = model.userById().first(userB.id);
+    User.unfollow(user1, user2);
+  }
+
+  public void followUser(User userA, User userB) {
+    User user1 = model.userById().first(userA.id);
+    User user2 = model.userById().first(userB.id);
+    User.follow(user1, user2);
+  }
+
+  public void unfollowConversation(Uuid user, Uuid conversation) {
+    userConversationTracking.get(user).remove(conversation);
+  }
+
+  public void followConversation(Uuid user, Uuid conversation) {
+    // Put into hashmap the conversation and what the size of the conversation
+    // is for the user at the time of following
+    ConversationHeader convo = model.conversationById().first(conversation);
+    userConversationTracking.get(user).put(conversation, convo.size);
+  }
+  
+  //change user's status for a conversation to not member
+  public void revokeMember(Uuid user, Uuid targetUser, Uuid conversation) {
+	ConversationHeader convo = model.conversationById().first(conversation);
+	if(convo.isOwner(user) && convo.userLevels.get(targetUser) != 0) {
+	  convo.userLevels.remove(targetUser);
+	  convo.userLevels.put(targetUser, 0); 
+	} else if(convo.isOwner(user) && convo.userLevels.get(targetUser) == 0) {
+	  System.out.println("User is already currently not a member of this conversation.");
+	} else {
+	  System.out.println("Access denied: must be owner or creator to set member access.");
+	}
+  }
+  
+  //change user's status for a conversation to member
+  public void setMember(Uuid user, Uuid targetUser, Uuid conversation) {
+	ConversationHeader convo = model.conversationById().first(conversation);
+	if(convo.isOwner(user) && convo.userLevels.get(targetUser) != 1) {
+	  convo.userLevels.remove(targetUser);
+	  convo.userLevels.put(targetUser, 1); 	
+	} else if(convo.isOwner(user) && convo.userLevels.get(targetUser) == 1) {
+	  System.out.println("User is already currently a member of this conversation.");
+	} else {
+	  System.out.println("Access denied: must be owner or creator to set member access.");
+	}
+  }
+  
+  //change user's status for a conversation to owner
+  public void setOwner(Uuid user, Uuid targetUser, Uuid conversation) {
+	ConversationHeader convo = model.conversationById().first(conversation);
+	if(convo.isCreator(user) && convo.userLevels.get(targetUser) != 2) {
+	  convo.userLevels.remove(targetUser);
+	  convo.userLevels.put(targetUser, 2); 
+	} else if(convo.isOwner(user) && convo.userLevels.get(targetUser) == 2) {
+	  System.out.println("User is already currently an owner of this conversation.");
+	} else {
+	  System.out.println("Access denied: must be creator to set owner access.");
+	}
+  }
 
 }
