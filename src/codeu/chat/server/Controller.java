@@ -39,6 +39,8 @@ public final class Controller implements RawController, BasicController {
   private final LocalFile localFile;
   
   private boolean isInitialized = false;
+  
+  private int convoSize = 0;
 
   public Controller(Uuid serverId, Model model) {
     this.model = model;
@@ -73,6 +75,7 @@ public final class Controller implements RawController, BasicController {
   public Message newMessage(Uuid author, Uuid conversation, String body) {
 	ConversationHeader convo = model.conversationById().first(conversation);
 	if(convo.isMember(author)) {
+	  convoSize++;
       return newMessage(createId(), author, conversation, body, Time.now());
 	} else {
 	  System.out.println("Access denied: must be member to add message.");
@@ -104,6 +107,8 @@ public final class Controller implements RawController, BasicController {
 
     if (foundUser != null && foundConversation != null && isIdFree(id)) {
 
+      convoSize++;
+    	
       message = new Message(id, Uuid.NULL, Uuid.NULL, creationTime, author, body, conversation);
       model.add(message);
       LOG.info("Message added: %s", message.id);
@@ -266,10 +271,10 @@ public final class Controller implements RawController, BasicController {
     for (Uuid conversation : userConversationSize.keySet()) {
       ConversationHeader convo = model.conversationById().first(conversation);
       String title = convo.title;
-      int newMessages = convo.size - userConversationSize.get(conversation);
+      int newMessages = convoSize - userConversationSize.get(conversation);
       String line = String.format("CONVERSATION %s: You have %d new messages!\n", title, newMessages);
       status.append(line);
-      userConversationTracking.get(user).put(conversation, convo.size);
+      userConversationTracking.get(user).put(conversation, convoSize);
     }
     User userA = model.userById().first(user);
     status.append(userA.statusUpdate());
@@ -295,8 +300,7 @@ public final class Controller implements RawController, BasicController {
   public void followConversation(Uuid user, Uuid conversation) {
     // Put into hashmap the conversation and what the size of the conversation
     // is for the user at the time of following
-    ConversationHeader convo = model.conversationById().first(conversation);
-    userConversationTracking.get(user).put(conversation, convo.size);
+    userConversationTracking.get(user).put(conversation, convoSize);
   }
   
   //change user's status for a conversation to not member
