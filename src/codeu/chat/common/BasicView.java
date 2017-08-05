@@ -31,8 +31,7 @@ import codeu.chat.util.Uuid;
 //   have no effect on the server's state.
 
 public interface BasicView {
-  //get the information of the server.
-  public ServerInfo getServerInfo();
+
   // GET USERS
   //
   //   Return all users whose id is found in the given collection.

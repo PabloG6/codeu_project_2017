@@ -95,26 +95,6 @@ final class View implements BasicView {
   }
 
   @Override
-  public ServerInfo getServerInfo() {
-    try {
-      final Connection connection = this.source.connect();
-      Serializers.INTEGER.write(connection.out(), NetworkCode.SERVER_INFO_REQUEST);
-      if(Serializers.INTEGER.read(connection.in()) == NetworkCode.SERVER_INFO_RESPONSE) {
-        final Uuid version = Uuid.SERIALIZER.read(connection.in());
-        return new ServerInfo(version);
-      } else {
-        System.out.println("Expected SERVER_INFO_RESPONSE but didn't receive it.");
-      }
-    } catch (IOException e) {
-      System.out.println("ERROR: Exception during call on server. Check log for details.");
-      e.printStackTrace();
-    }
-
-    return null;
-  }
-
-
-  @Override
   public Collection<ConversationPayload> getConversationPayloads(Collection<Uuid> ids) {
 
     final Collection<ConversationPayload> conversations = new ArrayList<>();
@@ -169,9 +149,10 @@ final class View implements BasicView {
       
       if (Serializers.INTEGER.read(connection.in()) == NetworkCode.SERVER_INFO_RESPONSE) {
         final Time startTime = Time.SERIALIZER.read(connection.in());
-        return new ServerInfo(startTime);
+        final Uuid version = Uuid.SERIALIZER.read(connection.in());
+        return new ServerInfo(startTime, version);
       } else {
-        System.out.println("ERROR: Server did not respond with the type of response expected.");
+        System.out.println("Expected SERVER_INFO_RESPONSE but didn't receive it.");
         LOG.error("Server did not respond with the type of response expected.");
       }
     } catch (Exception ex) {
