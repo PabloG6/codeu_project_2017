@@ -33,9 +33,7 @@ public final class Context {
     this.view = new View(source);
     this.controller = new Controller(source);
   }
-  public ServerInfo getServerInfo() {
-    return view.getServerInfo();
-  }
+
   public UserContext create(String name) {
     final User user = controller.newUser(name);
     return user == null ?

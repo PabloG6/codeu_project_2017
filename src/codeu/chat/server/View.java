@@ -59,12 +59,6 @@ public final class View implements BasicView, SinglesView {
     this.model = model;
   }
 
-
-  @Override
-  public ServerInfo getServerInfo() {
-    return null;
-  }
-
   @Override
   public Collection<User> getUsers() {
     return all(model.userById());

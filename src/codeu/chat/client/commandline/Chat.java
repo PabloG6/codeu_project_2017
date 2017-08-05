@@ -114,17 +114,9 @@ public final class Chat {
 	  } else {
 	    System.out.println("Server has been running since " + info.startTime + ".");
 	    System.out.println("Server has been running for " + info.duration() + " seconds.");
+	    System.out.format("CODE U CHAT CLIENT SERVER VERSION: %s \n", info.version);
 	    }
 	  }
-      
-    public void invoke(Scanner line) {
-      final ServerInfo info = context.getServerInfo();
-      if(info == null) {
-        System.out.println("Server did not send a valid response. Please try again");
-    } else {
-        System.out.format("CODE U CHAT CLIENT SERVER VERSION: %s \n", info.version);
-      }
-    }
 	});
 
     // HELP
