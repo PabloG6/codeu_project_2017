@@ -66,5 +66,8 @@ public interface BasicController {
   
   // UNFOLLOW CONVERSATION
   void unfollowConversation(Uuid user, Uuid conversation);
+  
+  // change user's status for a conversation (member/owner/creator)
+  void changePermission(Uuid user, Uuid conversation, int newPermission);
 
 }

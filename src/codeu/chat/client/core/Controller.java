@@ -187,6 +187,7 @@ final class Controller implements BasicController {
       Serializers.INTEGER.write(connection.out(), NetworkCode.NEW_CONVERSATION_REQUEST);
       Serializers.STRING.write(connection.out(), title);
       Uuid.SERIALIZER.write(connection.out(), owner);
+      Serializers.INTEGER.write(connection.out(), defaultPermission);
 
       if (Serializers.INTEGER.read(connection.in()) == NetworkCode.NEW_CONVERSATION_RESPONSE) {
         response = Serializers.nullable(ConversationHeader.SERIALIZER).read(connection.in());
@@ -199,5 +200,25 @@ final class Controller implements BasicController {
     }
 
     return response;
+  }
+  
+  //change user's status for a conversation (member/owner/creator)
+  @Override
+  public void changePermission(Uuid user, Uuid conversation, int newPermission)  {
+
+    try (final Connection connection = source.connect()) {
+
+      Serializers.INTEGER.write(connection.out(), NetworkCode.CHANGE_PERMISSION_REQUEST);
+      Uuid.SERIALIZER.write(connection.out(), user);
+      Uuid.SERIALIZER.write(connection.out(), conversation);
+      Serializers.INTEGER.write(connection.out(), newPermission);
+
+      if (!(Serializers.INTEGER.read(connection.in()) == NetworkCode.CHANGE_PERMISSION_RESPONSE)) {
+    	LOG.error("Response from server failed.");
+      }
+    } catch (Exception ex) {
+      System.out.println("ERROR: Exception during call on server. Check log for details.");
+      LOG.error(ex, "Exception during call on server.");
+    }
   }
 }
