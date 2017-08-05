@@ -59,7 +59,7 @@ public final class Controller implements RawController, BasicController {
     }		
       for (ConversationHeader item : localFile.getCopyOfConversationHeaders())		
     {		
-      this.newConversation(item.id, item.title, item.owner, item.creation);		
+      this.newConversation(item.id, item.owner, item.creation, item.title, item.defaultPermission);		
     }		
     for(Message item :localFile.getCopyOfMessages())		
     {		
