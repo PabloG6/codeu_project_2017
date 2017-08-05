@@ -43,7 +43,13 @@ public final class Controller implements RawController, BasicController {
 
   @Override
   public Message newMessage(Uuid author, Uuid conversation, String body) {
-    return newMessage(createId(), author, conversation, body, Time.now());
+	ConversationHeader convo = model.conversationById().first(conversation);
+	if(convo.isMember(author)) {
+      return newMessage(createId(), author, conversation, body, Time.now());
+	} else {
+	  System.out.println("Access denied: must be member to add message.");
+	  return null;
+	}
   }
 
   @Override
@@ -61,8 +67,12 @@ public final class Controller implements RawController, BasicController {
 
     final User foundUser = model.userById().first(author);
     final ConversationPayload foundConversation = model.conversationPayloadById().first(conversation);
-
+    
     Message message = null;
+    
+    ConversationHeader convo = model.conversationById().first(conversation);    
+    
+    if(convo.isMember(author)) { 
 
     if (foundUser != null && foundConversation != null && isIdFree(id)) {
 
@@ -96,6 +106,9 @@ public final class Controller implements RawController, BasicController {
       // Update the conversation to point to the new last message as it has changed.
 
       foundConversation.lastMessage = message.id;
+    }
+    } else {
+      System.out.println("Access denied: must be member to add message.");
     }
 
     return message;
