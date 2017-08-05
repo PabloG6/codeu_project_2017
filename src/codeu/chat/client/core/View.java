@@ -14,9 +14,11 @@
 
 package codeu.chat.client.core;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import codeu.chat.common.*;
 import codeu.chat.common.BasicView;
 import codeu.chat.common.ConversationHeader;
 import codeu.chat.common.ConversationPayload;
@@ -147,9 +149,10 @@ final class View implements BasicView {
       
       if (Serializers.INTEGER.read(connection.in()) == NetworkCode.SERVER_INFO_RESPONSE) {
         final Time startTime = Time.SERIALIZER.read(connection.in());
-        return new ServerInfo(startTime);
+        final Uuid version = Uuid.SERIALIZER.read(connection.in());
+        return new ServerInfo(startTime, version);
       } else {
-        System.out.println("ERROR: Server did not respond with the type of response expected.");
+        System.out.println("Expected SERVER_INFO_RESPONSE but didn't receive it.");
         LOG.error("Server did not respond with the type of response expected.");
       }
     } catch (Exception ex) {

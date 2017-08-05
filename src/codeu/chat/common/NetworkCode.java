@@ -56,4 +56,5 @@ public final class NetworkCode {
       SET_MEMBER_RESPONSE = 48,
       SET_OWNER_REQUEST = 49,
       SET_OWNER_RESPONSE = 50;
+
 }

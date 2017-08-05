@@ -114,6 +114,7 @@ public final class Chat {
 	  } else {
 	    System.out.println("Server has been running since " + info.startTime + ".");
 	    System.out.println("Server has been running for " + info.duration() + " seconds.");
+	    System.out.format("CODE U CHAT CLIENT SERVER VERSION: %s \n", info.version);
 	    }
 	  }
 	});
@@ -133,6 +134,8 @@ public final class Chat {
         System.out.println("    Add a new user with the given name.");
         System.out.println("  u-sign-in <name>");
         System.out.println("    Sign in as the user with the given name.");
+        System.out.println("  info");
+        System.out.println("    Shows the current version of the Chat Relay app");
         System.out.println("  uptime");
         System.out.println("    Display how long server has been running.");
         System.out.println("  version");
