@@ -204,12 +204,13 @@ final class Controller implements BasicController {
   
   //change user's status for a conversation to not member
   @Override
-  public void revokeMember(Uuid user, Uuid conversation)  {
+  public void revokeMember(Uuid user, Uuid targetUser, Uuid conversation)  {
 
     try (final Connection connection = source.connect()) {
 
       Serializers.INTEGER.write(connection.out(), NetworkCode.REVOKE_MEMBER_REQUEST);
       Uuid.SERIALIZER.write(connection.out(), user);
+      Uuid.SERIALIZER.write(connection.out(), targetUser);
       Uuid.SERIALIZER.write(connection.out(), conversation);
 
       if (!(Serializers.INTEGER.read(connection.in()) == NetworkCode.REVOKE_MEMBER_RESPONSE)) {
@@ -223,12 +224,13 @@ final class Controller implements BasicController {
   
   //change user's status for a conversation to member
   @Override
-  public void setMember(Uuid user, Uuid conversation)  {
+  public void setMember(Uuid user, Uuid targetUser, Uuid conversation)  {
 
     try (final Connection connection = source.connect()) {
 
       Serializers.INTEGER.write(connection.out(), NetworkCode.SET_MEMBER_REQUEST);
       Uuid.SERIALIZER.write(connection.out(), user);
+      Uuid.SERIALIZER.write(connection.out(), targetUser);
       Uuid.SERIALIZER.write(connection.out(), conversation);
 
       if (!(Serializers.INTEGER.read(connection.in()) == NetworkCode.SET_MEMBER_RESPONSE)) {
@@ -242,12 +244,13 @@ final class Controller implements BasicController {
   
   //change user's status for a conversation to owner
   @Override
-  public void setOwner(Uuid user, Uuid conversation)  {
+  public void setOwner(Uuid user, Uuid targetUser, Uuid conversation)  {
 
     try (final Connection connection = source.connect()) {
 
       Serializers.INTEGER.write(connection.out(), NetworkCode.SET_OWNER_REQUEST);
       Uuid.SERIALIZER.write(connection.out(), user);
+      Uuid.SERIALIZER.write(connection.out(), targetUser);
       Uuid.SERIALIZER.write(connection.out(), conversation);
 
       if (!(Serializers.INTEGER.read(connection.in()) == NetworkCode.SET_OWNER_RESPONSE)) {

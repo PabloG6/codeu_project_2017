@@ -212,24 +212,42 @@ public final class Controller implements RawController, BasicController {
   }
   
   //change user's status for a conversation to not member
-  public void revokeMember(Uuid user, Uuid conversation) {
+  public void revokeMember(Uuid user, Uuid targetUser, Uuid conversation) {
 	ConversationHeader convo = model.conversationById().first(conversation);
-	convo.userLevels.remove(user);
-	convo.userLevels.put(user, 0); 
+	if(convo.isOwner(user) && convo.userLevels.get(targetUser) != 0) {
+	  convo.userLevels.remove(targetUser);
+	  convo.userLevels.put(targetUser, 0); 
+	} else if(convo.isOwner(user) && convo.userLevels.get(targetUser) == 0) {
+	  System.out.println("User is already currently not a member of this conversation.");
+	} else {
+	  System.out.println("Access denied: must be owner or creator to set member access.");
+	}
   }
   
   //change user's status for a conversation to member
-  public void setMember(Uuid user, Uuid conversation) {
+  public void setMember(Uuid user, Uuid targetUser, Uuid conversation) {
 	ConversationHeader convo = model.conversationById().first(conversation);
-	convo.userLevels.remove(user);
-	convo.userLevels.put(user, 1); 
+	if(convo.isOwner(user) && convo.userLevels.get(targetUser) != 1) {
+	  convo.userLevels.remove(targetUser);
+	  convo.userLevels.put(targetUser, 1); 	
+	} else if(convo.isOwner(user) && convo.userLevels.get(targetUser) == 1) {
+	  System.out.println("User is already currently a member of this conversation.");
+	} else {
+	  System.out.println("Access denied: must be owner or creator to set member access.");
+	}
   }
   
   //change user's status for a conversation to owner
-  public void setOwner(Uuid user, Uuid conversation) {
+  public void setOwner(Uuid user, Uuid targetUser, Uuid conversation) {
 	ConversationHeader convo = model.conversationById().first(conversation);
-	convo.userLevels.remove(user);
-	convo.userLevels.put(user, 2); 
+	if(convo.isCreator(user) && convo.userLevels.get(targetUser) != 2) {
+	  convo.userLevels.remove(targetUser);
+	  convo.userLevels.put(targetUser, 2); 
+	} else if(convo.isOwner(user) && convo.userLevels.get(targetUser) == 2) {
+	  System.out.println("User is already currently an owner of this conversation.");
+	} else {
+	  System.out.println("Access denied: must be creator to set owner access.");
+	}
   }
 
 }
