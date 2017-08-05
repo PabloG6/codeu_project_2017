@@ -43,7 +43,13 @@ public final class Controller implements RawController, BasicController {
 
   @Override
   public Message newMessage(Uuid author, Uuid conversation, String body) {
-    return newMessage(createId(), author, conversation, body, Time.now());
+	ConversationHeader convo = model.conversationById().first(conversation);
+	if(convo.isMember(author)) {
+      return newMessage(createId(), author, conversation, body, Time.now());
+	} else {
+	  System.out.println("Access denied: must be member to add message.");
+	  return null;
+	}
   }
 
   @Override
@@ -61,8 +67,12 @@ public final class Controller implements RawController, BasicController {
 
     final User foundUser = model.userById().first(author);
     final ConversationPayload foundConversation = model.conversationPayloadById().first(conversation);
-
+    
     Message message = null;
+    
+    ConversationHeader convo = model.conversationById().first(conversation);    
+    
+    if(convo.isMember(author)) { 
 
     if (foundUser != null && foundConversation != null && isIdFree(id)) {
 
@@ -96,6 +106,9 @@ public final class Controller implements RawController, BasicController {
       // Update the conversation to point to the new last message as it has changed.
 
       foundConversation.lastMessage = message.id;
+    }
+    } else {
+      System.out.println("Access denied: must be member to add message.");
     }
 
     return message;
@@ -209,6 +222,45 @@ public final class Controller implements RawController, BasicController {
     // is for the user at the time of following
     ConversationHeader convo = model.conversationById().first(conversation);
     userConversationTracking.get(user).put(conversation, convo.size);
+  }
+  
+  //change user's status for a conversation to not member
+  public void revokeMember(Uuid user, Uuid targetUser, Uuid conversation) {
+	ConversationHeader convo = model.conversationById().first(conversation);
+	if(convo.isOwner(user) && convo.userLevels.get(targetUser) != 0) {
+	  convo.userLevels.remove(targetUser);
+	  convo.userLevels.put(targetUser, 0); 
+	} else if(convo.isOwner(user) && convo.userLevels.get(targetUser) == 0) {
+	  System.out.println("User is already currently not a member of this conversation.");
+	} else {
+	  System.out.println("Access denied: must be owner or creator to set member access.");
+	}
+  }
+  
+  //change user's status for a conversation to member
+  public void setMember(Uuid user, Uuid targetUser, Uuid conversation) {
+	ConversationHeader convo = model.conversationById().first(conversation);
+	if(convo.isOwner(user) && convo.userLevels.get(targetUser) != 1) {
+	  convo.userLevels.remove(targetUser);
+	  convo.userLevels.put(targetUser, 1); 	
+	} else if(convo.isOwner(user) && convo.userLevels.get(targetUser) == 1) {
+	  System.out.println("User is already currently a member of this conversation.");
+	} else {
+	  System.out.println("Access denied: must be owner or creator to set member access.");
+	}
+  }
+  
+  //change user's status for a conversation to owner
+  public void setOwner(Uuid user, Uuid targetUser, Uuid conversation) {
+	ConversationHeader convo = model.conversationById().first(conversation);
+	if(convo.isCreator(user) && convo.userLevels.get(targetUser) != 2) {
+	  convo.userLevels.remove(targetUser);
+	  convo.userLevels.put(targetUser, 2); 
+	} else if(convo.isOwner(user) && convo.userLevels.get(targetUser) == 2) {
+	  System.out.println("User is already currently an owner of this conversation.");
+	} else {
+	  System.out.println("Access denied: must be creator to set owner access.");
+	}
   }
 
 }

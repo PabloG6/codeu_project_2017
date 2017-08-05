@@ -66,5 +66,13 @@ public interface BasicController {
   
   // UNFOLLOW CONVERSATION
   void unfollowConversation(Uuid user, Uuid conversation);
+  
+  //change user's status for a conversation to not member
+  void revokeMember(Uuid user, Uuid targetUser, Uuid conversation);
 
+  //change user's status for a conversation to member
+  void setMember(Uuid user, Uuid targetUser, Uuid conversation);
+  
+  //change user's status for a conversation to owner
+  void setOwner(Uuid user, Uuid targetUser, Uuid conversation);
 }
